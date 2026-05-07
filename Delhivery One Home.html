@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Delhivery One — Home</title>
+<link rel="stylesheet" href="tarmac.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #F4F4F5;
+    font-family: var(--font-body);
+    color: var(--color-text-secondary);
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+  }
+  /* ── App shell ── */
+  .app { display: flex; min-height: 100vh; }
+
+  /* Persona icons inside black sidebar */
+  .sb-persona {
+    padding: 8px 0 10px;
+    display: flex; flex-direction: column; gap: 2px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 4px;
+  }
+  .sb-persona-label {
+    font-size: 8px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+    color: rgba(255,255,255,0.45); text-align: center; margin: 6px 0 4px;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  .sb-persona .sb-icon { position: relative; }
+  .sb-persona .sb-icon .pcount {
+    position: absolute; top: 6px; right: 8px;
+    background: var(--red-500); color: #fff;
+    font-size: 9px; font-weight: 700; font-family: var(--font-ui);
+    padding: 1px 5px; border-radius: 999px; line-height: 1.4;
+    border: 1.5px solid #1B1D22;
+  }
+  /* Tooltip for sidebar icons */
+  .sb-icon[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: calc(100% + 8px); top: 50%; transform: translateY(-50%);
+    background: #0D0D0D; color: #fff;
+    font-size: 12px; font-weight: 500; font-family: var(--font-body);
+    padding: 6px 10px; border-radius: 6px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity 120ms 80ms;
+    z-index: 100;
+  }
+  .sb-icon[data-tip]::before {
+    content: ''; position: absolute;
+    left: calc(100% + 2px); top: 50%; transform: translateY(-50%);
+    border: 5px solid transparent; border-right-color: #0D0D0D;
+    opacity: 0; pointer-events: none;
+    transition: opacity 120ms 80ms;
+    z-index: 100;
+  }
+  .sb-icon[data-tip]:hover::after, .sb-icon[data-tip]:hover::before { opacity: 1; }
+
+  /* Persona-driven visibility */
+  body[data-persona="owner"] [data-hide~="owner"] { display: none !important; }
+  body[data-persona="support"] [data-hide~="support"] { display: none !important; }
+  body[data-persona="operations"] [data-hide~="operations"] { display: none !important; }
+  /* Persona-only blocks: shown only for that persona */
+  [data-persona-only] { display: none !important; }
+  body[data-persona="owner"] [data-persona-only~="owner"] { display: grid !important; }
+  body[data-persona="support"] [data-persona-only~="support"] { display: grid !important; }
+  body[data-persona="operations"] [data-persona-only~="operations"] { display: grid !important; }
+  body[data-persona="all"] [data-persona-only~="all"] { display: grid !important; }
+  .sidebar {
+    width: 60px;
+    background: #1B1D22;
+    border-right: 1px solid rgb(67,70,81);
+    display: flex; flex-direction: column;
+    flex-shrink: 0;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .sb-logo {
+    width: 60px; height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--red-500);
+    color: #fff; font-weight: 800; font-size: 11px;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+    text-align: center;
+    font-family: var(--font-display);
+  }
+  .sb-logo small { display:block; font-weight:600; font-size:8px; letter-spacing:1px; opacity:.9 }
+  .sb-icons { padding: 8px 0; display: flex; flex-direction: column; gap: 2px; }
+  .sb-icon {
+    width: 60px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    color: #B2B8CC; cursor: pointer; position: relative;
+    transition: color 150ms, background 150ms;
+  }
+  .sb-icon:hover { color: #fff; background: rgba(255,255,255,0.04); }
+  .sb-icon.active { color: #fff; background: rgba(237,27,54,0.12); }
+  .sb-icon.active::before {
+    content: ''; position: absolute; left: 0; top: 8px; bottom: 8px;
+    width: 3px; background: var(--red-500);
+  }
+  .sb-icon svg { width: 20px; height: 20px; }
+  .sb-icon .dot { position: absolute; top: 10px; right: 14px; width: 6px; height: 6px; background: var(--red-500); border-radius: 999px; }
+  .sb-spacer { flex: 1; }
+
+  /* ── Main column ── */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+  /* ── Topbar ── */
+  .topbar {
+    height: 56px;
+    background: #fff;
+    border-bottom: 1px solid var(--color-border-default);
+    display: flex; align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+    position: sticky; top: 0; z-index: 30;
+  }
+  .crumb { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-tertiary); }
+  .crumb b { color: var(--color-text-primary); font-weight: 600; }
+  .search {
+    flex: 1; max-width: 720px;
+    display: flex; align-items: center; gap: 10px;
+    background: #F4F4F5;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    padding: 9px 14px;
+    transition: border-color 150ms, background 150ms;
+  }
+  .search:focus-within { border-color: var(--blue-500); background: #fff; box-shadow: 0 0 0 3px var(--alpha-blue-12); }
+  .search input { flex: 1; border: none; outline: none; background: none; font-size: 14px; font-family: var(--font-body); color: var(--color-text-primary); }
+  .search input::placeholder { color: var(--grey-400); }
+  .search kbd {
+    font-family: var(--font-ui); font-size: 11px; color: var(--color-text-tertiary);
+    background: #fff; border: 1px solid var(--color-border-default);
+    border-radius: 4px; padding: 2px 6px;
+  }
+  .top-btn {
+    height: 36px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 12px;
+    background: #fff;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    font-size: 13px; font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    position: relative;
+    font-family: var(--font-body);
+  }
+  .top-btn:hover { background: #F7F7F7; }
+  .top-btn .pill { background: var(--red-500); color: #fff; font-weight: 700; font-size: 11px; padding: 1px 6px; border-radius: 999px; font-family: var(--font-ui); }
+  .top-btn .ndot { position: absolute; top: 7px; right: 9px; width: 8px; height: 8px; background: var(--red-500); border-radius: 999px; border: 2px solid #fff; }
+  .client-pill {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 12px; height: 36px;
+    border-radius: var(--radius-medium);
+    background: #fff; border: 1px solid var(--color-border-default);
+    cursor: pointer;
+  }
+  .client-pill .swatch { width: 22px; height: 22px; background: linear-gradient(135deg, #ED1B36, #B88B5C); border-radius: 4px; }
+  .client-pill .l1 { font-size: 11px; color: var(--color-text-tertiary); line-height: 1; font-family: var(--font-ui); }
+  .client-pill .l2 { font-size: 13px; font-weight: 600; color: var(--color-text-primary); line-height: 1.2; }
+  .avatar-btn {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: var(--cardbox-500); color: #fff;
+    font-weight: 700; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-family: var(--font-ui);
+  }
+
+  /* ── Critical alerts strip ── */
+  .alert-strip {
+    background: var(--red-25);
+    border-bottom: 1px solid var(--red-100);
+    padding: 10px 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .alert-strip .pulse {
+    width: 24px; height: 24px; border-radius: 999px;
+    background: var(--red-500); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 0 rgba(237,27,54,0.5);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(237,27,54,0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(237,27,54,0); }
+    100% { box-shadow: 0 0 0 0 rgba(237,27,54,0); }
+  }
+  .alert-strip .label {
+    font-size: 11px; font-weight: 700; color: var(--red-700); font-family: var(--font-ui);
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .alert-strip .msg { font-size: 13px; color: var(--red-800); font-weight: 500; flex: 1; }
+  .alert-strip a { color: var(--red-700); font-weight: 600; text-decoration: underline; }
+  .alert-strip .dismiss { color: var(--red-700); cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+  .alert-strip .dismiss:hover { background: var(--red-50); }
+  .alert-pager { display: flex; gap: 4px; align-items: center; font-size: 11px; color: var(--red-700); font-family: var(--font-ui); }
+  .alert-pager button { background: #fff; border: 1px solid var(--red-100); border-radius: 4px; width: 22px; height: 22px; cursor: pointer; color: var(--red-700); display: flex; align-items: center; justify-content: center; }
+
+  /* ── Page tabs ── */
+  .page-tabs {
+    background: #fff;
+    border-bottom: 1px solid var(--color-border-default);
+    padding: 0 24px;
+    display: flex;
+    gap: 4px;
+    position: sticky; top: 56px; z-index: 20;
+  }
+  .page-tab {
+    padding: 14px 16px;
+    font-size: 14px; font-weight: 500; color: var(--color-text-tertiary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .page-tab:hover { color: var(--color-text-primary); }
+  .page-tab.active { color: var(--red-500); border-bottom-color: var(--red-500); font-weight: 600; }
+  .page-tab .badge { font-size: 11px; font-family: var(--font-ui); padding: 1px 7px; border-radius: 999px; background: var(--red-25); color: var(--red-700); font-weight: 600; }
+
+  /* ── Page area ── */
+  .page { padding: 20px 24px 48px; max-width: 1600px; margin: 0 auto; width: 100%; }
+  .page-title-row { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; }
+  .greeting h1 { font-size: 22px; font-weight: 600; color: var(--color-text-primary); letter-spacing: -0.3px; }
+  .greeting p { font-size: 13px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .page-actions { display: flex; gap: 8px; }
+
+  /* Buttons */
+  .btn { height: 36px; padding: 0 14px; border-radius: var(--radius-medium); font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-body); white-space: nowrap; transition: all 150ms; }
+  .btn-primary { background: var(--red-500); color: #fff; }
+  .btn-primary:hover { background: var(--red-600); }
+  .btn-dark { background: #111; color: #fff; }
+  .btn-dark:hover { background: #000; }
+  .btn-ghost { background: #fff; color: var(--color-text-secondary); border-color: var(--color-border-default); }
+  .btn-ghost:hover { background: #F7F7F7; }
+  .btn-link { background: none; color: var(--blue-500); border: none; padding: 0; height: auto; font-size: 13px; font-weight: 600; }
+  .btn-link:hover { color: var(--blue-600); text-decoration: underline; }
+  .btn-sm { height: 28px; padding: 0 10px; font-size: 12px; border-radius: 6px; }
+
+  /* ── Insights row ── */
+  .insights {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-bottom: 20px;
+  }
+  .insight-card {
+    background: #fff;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-large);
+    padding: 14px 16px;
+    display: flex; gap: 12px;
+    cursor: pointer;
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+  .insight-card:hover { border-color: var(--grey-200); box-shadow: var(--shadow-1); }
+  .insight-icon {
+    width: 36px; height: 36px; border-radius: var(--radius-medium);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .insight-icon.amber { background: var(--yellow-25); color: var(--yellow-600); }
+  .insight-icon.blue { background: var(--blue-25); color: var(--blue-500); }
+  .insight-icon.green { background: var(--green-25); color: var(--green-600); }
+  .insight-card .lab { font-size: 11px; font-weight: 700; font-family: var(--font-ui); letter-spacing: 0.8px; text-transform: uppercase; color: var(--color-text-tertiary); }
+  .insight-card .ti { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin-top: 2px; line-height: 1.3; }
+  .insight-card .lk { font-size: 13px; font-weight: 600; color: var(--blue-500); margin-top: 8px; display: inline-block; }
+
+  /* ── Layout grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 332px;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  @media (max-width: 1280px) { .grid { grid-template-columns: 1fr; } }
+
+  /* ── Section card ── */
+  .card {
+    background: #fff;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-large);
+    overflow: hidden;
+  }
+  .card + .card { margin-top: 16px; }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border-default);
+  }
+  .card-head h3 { font-size: 15px; font-weight: 600; color: var(--color-text-primary); display: flex; align-items: center; gap: 8px; }
+  .card-head .meta { font-size: 12px; color: var(--color-text-tertiary); }
+  .card-body { padding: 16px; }
+
+  /* Pill / chips */
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 4px; font-size: 11px; font-weight: 600; font-family: var(--font-ui); }
+  .chip-warn { background: var(--yellow-25); color: var(--yellow-700); }
+  .chip-success { background: var(--green-25); color: var(--green-700); }
+  .chip-info { background: var(--blue-25); color: var(--blue-600); }
+  .chip-error { background: var(--red-25); color: var(--red-700); }
+
+  /* ── Key metrics (4-col, dense) ── */
+  .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .metric {
+    padding: 16px; border-right: 1px solid var(--color-border-default);
+    display: flex; flex-direction: column; min-width: 0;
+  }
+  .metric:last-child { border-right: none; }
+  .metric .lab { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; font-family: var(--font-ui); color: var(--color-text-tertiary); }
+  .metric .num { font-size: 30px; font-weight: 700; color: var(--color-text-primary); margin-top: 6px; line-height: 1; letter-spacing: -0.5px; }
+  .metric .delta { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; font-family: var(--font-ui); }
+  .metric .delta b.up { color: var(--green-600); }
+  .metric .delta b.down { color: var(--red-500); }
+  .metric .delta.warn { color: var(--red-600); font-weight: 600; }
+  .metric .sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 10px; }
+  .metric .sub.warn { color: var(--red-600); font-weight: 600; }
+  .metric .actions { margin-top: auto; padding-top: 12px; display: flex; gap: 8px; }
+  .metric .micro-bar { height: 28px; display: flex; align-items: flex-end; gap: 2px; margin-top: 8px; }
+  .metric .micro-bar i { display: block; width: 4px; background: var(--blue-100); border-radius: 1px; }
+  .metric .micro-bar i.act { background: var(--blue-500); }
+
+  /* ── Exceptions row ── */
+  .exceptions-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
+  .exc {
+    padding: 14px 16px; border-right: 1px solid var(--color-border-default);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .exc:last-child { border-right: none; }
+  .exc-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .exc-icon.ndr { background: var(--red-25); color: var(--red-600); }
+  .exc-icon.addr { background: var(--yellow-25); color: var(--yellow-700); }
+  .exc .lab { font-size: 11px; font-weight: 700; font-family: var(--font-ui); letter-spacing: 0.8px; text-transform: uppercase; color: var(--color-text-tertiary); }
+  .exc .head { font-size: 18px; font-weight: 700; color: var(--color-text-primary); }
+  .exc .head small { font-size: 12px; font-weight: 500; color: var(--color-text-tertiary); margin-left: 6px; }
+  .exc .grow { flex: 1; min-width: 0; }
+  .exc .sub { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; }
+
+  /* ── Quick actions grid (right column top) ── */
+  .qa-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .qa {
+    background: #fff; border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    padding: 12px; cursor: pointer;
+    display: flex; flex-direction: column; gap: 6px;
+    transition: border-color 150ms;
+  }
+  .qa:hover { border-color: var(--grey-200); }
+  .qa-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .qa-title { font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
+  .qa-sub { font-size: 11px; color: var(--color-text-tertiary); font-family: var(--font-ui); }
+
+  /* Wallet card */
+  .wallet-card {
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-large);
+    background: #fff;
+    overflow: hidden;
+  }
+  .wallet-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border-default);
+  }
+  .wallet-row:last-child { border-bottom: none; }
+  .wallet-row .lab { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--color-text-tertiary); font-family: var(--font-ui); }
+  .wallet-row .val { font-size: 18px; font-weight: 700; color: var(--color-text-primary); margin-top: 2px; letter-spacing: -0.3px; }
+  .wallet-row .val small { font-size: 12px; color: var(--color-text-tertiary); font-weight: 500; }
+  .wallet-row .sub-line { font-size: 12px; color: var(--color-text-tertiary); font-weight: 500; margin-top: 4px; font-family: var(--font-ui); }
+
+  /* Collapsible cards (Funnel / RTO) */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--color-border-default); padding: 0; }
+  .kpi { background: #fff; padding: 14px 16px; }
+  .kpi .lab { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--color-text-tertiary); font-family: var(--font-ui); }
+  .kpi .val { font-size: 20px; font-weight: 700; color: var(--color-text-primary); margin-top: 6px; letter-spacing: -0.3px; }
+  .kpi .val small { font-size: 12px; color: var(--color-text-tertiary); font-weight: 500; }
+  .kpi .d { font-size: 11px; margin-top: 4px; font-family: var(--font-ui); font-weight: 600; }
+  .kpi .d.up { color: var(--green-600); }
+  .kpi .d.dn { color: var(--red-600); }
+  .expand-link { cursor: pointer; user-select: none; }
+  .expand-link.open::after { content: ''; }
+  .details { border-top: 1px solid var(--color-border-default); }
+
+  /* RTO summary (collapsed) */
+  .rto-summary { padding: 4px 16px 12px; }
+  .rs-top { display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--color-border-default); font-size: 13px; color: var(--color-text-primary); }
+  .rs-top:last-child { border-bottom: none; }
+  .rs-top i { width: 8px; height: 8px; border-radius: 999px; display: inline-block; }
+  .rs-num { font-family: var(--font-ui); font-weight: 600; font-size: 13px; }
+  .rs-num small { color: var(--color-text-tertiary); font-weight: 500; margin-left: 4px; }
+
+  /* Support/Claims summary card */
+  .sc-summary .card-head { border-bottom: none; padding-bottom: 0; }
+  .sc-body { padding: 4px 20px 20px; }
+  .sc-big { font-size: 32px; font-weight: 700; color: var(--color-text-primary); letter-spacing: -0.5px; line-height: 1; }
+  .sc-big small { font-size: 13px; font-weight: 500; color: var(--color-text-tertiary); margin-left: 6px; letter-spacing: 0; }
+  .sc-meta { font-size: 12px; color: var(--color-text-secondary); margin-top: 8px; font-family: var(--font-ui); }
+  .sc-meta b { color: var(--color-text-primary); font-weight: 600; }
+  .wallet-row .grow { flex: 1; min-width: 0; }
+
+  /* Pickup cards */
+  .pickup-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+  .pickup {
+    background: #fff;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    padding: 14px;
+    position: relative;
+    transition: border-color 150ms;
+  }
+  .pickup:hover { border-color: var(--grey-200); }
+  .pickup .row { display: flex; align-items: center; justify-content: space-between; }
+  .pickup .name { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+  .pickup .stamp {
+    position: absolute; top: -8px; right: 12px;
+    background: var(--green-25); color: var(--green-700);
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 700; font-family: var(--font-ui);
+    letter-spacing: 0.5px; text-transform: uppercase;
+    border: 1px solid var(--green-100);
+  }
+  .pickup .meta { display: flex; align-items: center; gap: 10px; margin-top: 8px; color: var(--color-text-tertiary); font-size: 12px; font-family: var(--font-ui); }
+  .pickup .meta b { color: var(--color-text-primary); font-weight: 600; }
+  .pickup .status-row { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+
+  /* Performance funnel — numeric, no bars */
+  .funnel { padding: 4px 0 8px; }
+  .funnel-row { display: grid; grid-template-columns: 1fr 110px 80px 110px; gap: 16px; align-items: center; padding: 9px 16px; border-bottom: 1px solid var(--color-border-default); }
+  .funnel-row:last-child { border-bottom: none; }
+  .funnel-row:hover { background: var(--white-300); }
+  .funnel-row .stage { font-size: 13px; font-weight: 500; color: var(--color-text-primary); display: flex; align-items: center; gap: 10px; }
+  .funnel-row .stage i { width: 8px; height: 8px; border-radius: 999px; background: var(--blue-500); display: inline-block; flex-shrink: 0; }
+  .funnel-row .stage.rto i { background: var(--yellow-500); }
+  .funnel-row .stage.lost i { background: var(--red-500); }
+  .funnel-row .stage.delivered i { background: var(--green-500); }
+  .funnel-row .stage.picked i { background: var(--blue-400); }
+  .funnel-row .stage.transit i { background: var(--blue-600); }
+  .funnel-row .num { font-size: 14px; font-weight: 600; color: var(--color-text-primary); font-family: var(--font-ui); text-align: right; }
+  .funnel-row .pct { font-size: 13px; color: var(--color-text-secondary); font-family: var(--font-ui); font-weight: 500; text-align: right; }
+  .funnel-row .delta { font-size: 12px; font-family: var(--font-ui); font-weight: 600; text-align: right; }
+  .funnel-row .delta.up { color: var(--green-600); }
+  .funnel-row .delta.dn { color: var(--red-600); }
+  .funnel-row .delta.neutral { color: var(--color-text-tertiary); }
+  .funnel-head { display: grid; grid-template-columns: 1fr 110px 80px 110px; gap: 16px; padding: 8px 16px; border-bottom: 1px solid var(--color-border-default); background: var(--white-300); font-size: 11px; font-weight: 600; font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-text-tertiary); }
+  .funnel-head .r { text-align: right; }
+  .bar-blue > i { background: var(--blue-500); }
+  .bar-green > i { background: var(--green-500); }
+  .bar-amber > i { background: var(--yellow-500); }
+  .bar-red > i { background: var(--red-500); }
+  .funnel-row .num { font-size: 13px; font-weight: 600; color: var(--color-text-primary); font-family: var(--font-ui); text-align: right; }
+  .funnel-row .pct { font-size: 12px; color: var(--color-text-tertiary); font-family: var(--font-ui); text-align: right; }
+
+  /* Delivery time stats */
+  .time-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 16px 16px; }
+  .ts {
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    padding: 10px 12px;
+  }
+  .ts .lab { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--color-text-tertiary); font-family: var(--font-ui); }
+  .ts .val { font-size: 18px; font-weight: 700; color: var(--color-text-primary); margin-top: 4px; letter-spacing: -0.3px; }
+  .ts .val small { font-size: 12px; color: var(--color-text-tertiary); font-weight: 500; }
+  .ts .delta { font-size: 11px; margin-top: 2px; font-family: var(--font-ui); }
+
+  /* RTO list */
+  .rto-list { padding: 0 16px 16px; }
+  .rto-row { display: grid; grid-template-columns: 1fr 80px 50px; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--color-border-default); font-size: 13px; }
+  .rto-row:last-child { border-bottom: none; }
+  .rto-row .rl { display: flex; align-items: center; gap: 8px; color: var(--color-text-primary); }
+  .rto-row .rl i { width: 8px; height: 8px; border-radius: 2px; }
+  .rto-row .num { font-family: var(--font-ui); font-size: 13px; font-weight: 600; text-align: right; }
+  .rto-row .pct { font-family: var(--font-ui); font-size: 12px; color: var(--color-text-tertiary); text-align: right; }
+
+  /* Whats new */
+  .news-card {
+    background: linear-gradient(135deg, #1B1D22 0%, #2A2D35 100%);
+    border-radius: var(--radius-large);
+    padding: 18px;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+  }
+  .news-card::before {
+    content:''; position:absolute; right:-40px; top:-40px; width:160px; height:160px;
+    background: radial-gradient(closest-side, rgba(237,27,54,0.35), transparent);
+    border-radius: 999px; pointer-events:none;
+  }
+  .news-tag { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--red-300); font-family: var(--font-ui); }
+  .news-card h4 { font-size: 18px; font-weight: 600; margin-top: 6px; line-height: 1.3; }
+  .news-card p { font-size: 13px; color: #C4C4C4; margin-top: 6px; line-height: 1.5; }
+  .news-card .pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 6px 12px; background: var(--red-500); border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .news-list { display: flex; flex-direction: column; }
+  .news-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--color-border-default); cursor: pointer; transition: background 150ms; }
+  .news-item:hover { background: #FAFAFA; }
+  .news-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
+  .news-item .ti { font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
+  .news-item .sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .news-item .new { font-size: 9px; font-weight: 700; padding: 1px 5px; background: var(--red-500); color: #fff; border-radius: 3px; font-family: var(--font-ui); letter-spacing: 0.5px; }
+
+  /* Support / Claims tabs */
+  .seg {
+    display: inline-flex; padding: 2px;
+    background: var(--white-400); border-radius: 6px;
+    font-size: 12px; font-family: var(--font-ui);
+  }
+  .seg button {
+    border: none; background: none; padding: 4px 10px; border-radius: 4px;
+    cursor: pointer; font-weight: 500; color: var(--color-text-tertiary); font-family: var(--font-ui); font-size: 12px;
+  }
+  .seg button.active { background: #fff; color: var(--color-text-primary); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+  .ticket-list { display: flex; flex-direction: column; }
+  .ticket { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--color-border-default); align-items: center; cursor: pointer; }
+  .ticket:hover { background: #FAFAFA; }
+  .ticket .ic { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .ticket .ti { font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
+  .ticket .sub { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; font-family: var(--font-ui); }
+  .ticket .right { text-align: right; }
+  .ticket .id { font-size: 11px; color: var(--color-text-tertiary); font-family: var(--font-ui); }
+  .ticket .age { font-size: 11px; color: var(--red-600); font-weight: 600; font-family: var(--font-ui); margin-top: 2px; }
+
+  /* Practices */
+  .practices { padding: 12px 16px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .practice { display: flex; gap: 10px; padding: 10px 12px; background: var(--green-25); border-radius: 8px; border: 1px solid var(--green-100); }
+  .practice svg { flex-shrink: 0; color: var(--green-600); }
+  .practice .ti { font-size: 13px; font-weight: 600; color: var(--green-900); line-height: 1.3; }
+  .practice .sub { font-size: 11px; color: var(--green-800); margin-top: 2px; line-height: 1.3; }
+
+  /* Marketing card (NOT-an-ad style — content first) */
+  .promo {
+    background: var(--cardbox-25);
+    border: 1px solid var(--cardbox-100);
+    border-radius: var(--radius-large);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 140px;
+  }
+  .promo-body { padding: 16px; }
+  .promo-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--cardbox-700); font-family: var(--font-ui); }
+  .promo-body h4 { font-size: 16px; font-weight: 600; color: var(--cardbox-900); margin-top: 6px; line-height: 1.3; }
+  .promo-body p { font-size: 12px; color: var(--cardbox-800); margin-top: 6px; line-height: 1.5; }
+  .promo-body .stat { display: flex; gap: 16px; margin-top: 12px; }
+  .promo-body .stat > div .n { font-size: 18px; font-weight: 700; color: var(--cardbox-900); }
+  .promo-body .stat > div .l { font-size: 10px; color: var(--cardbox-700); font-family: var(--font-ui); letter-spacing: 0.5px; text-transform: uppercase; }
+  .promo-body .lk { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--cardbox-800); cursor: pointer; }
+  .promo-art {
+    background:
+      radial-gradient(circle at 30% 30%, var(--cardbox-300), transparent 60%),
+      radial-gradient(circle at 70% 70%, var(--cardbox-200), transparent 50%),
+      var(--cardbox-50);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Education */
+  .edu { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+  .edu-card { border: 1px solid var(--color-border-default); border-radius: var(--radius-medium); padding: 14px; cursor: pointer; transition: border-color 150ms; }
+  .edu-card:hover { border-color: var(--grey-200); }
+  .edu-card .lab { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-family: var(--font-ui); }
+  .edu-card .ti { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin-top: 6px; line-height: 1.3; }
+  .edu-card .sub { font-size: 12px; color: var(--color-text-tertiary); margin-top: 4px; line-height: 1.4; }
+  .edu-card .meta { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 11px; color: var(--color-text-tertiary); font-family: var(--font-ui); }
+
+  /* Tasks list (right rail) */
+  .tasks-list { display: flex; flex-direction: column; }
+  .task { display: grid; grid-template-columns: 24px 1fr; gap: 10px; padding: 10px 16px; align-items: flex-start; border-top: 1px solid var(--color-border-default); cursor: pointer; }
+  .task:first-child { border-top: none; }
+  .task:hover { background: #FAFAFA; }
+  .task input[type="checkbox"] { width: 16px; height: 16px; margin-top: 1px; accent-color: var(--red-500); }
+  .task .ti { font-size: 13px; color: var(--color-text-primary); font-weight: 500; line-height: 1.4; }
+  .task .sub { font-size: 11px; color: var(--color-text-tertiary); font-family: var(--font-ui); margin-top: 2px; }
+
+  /* Analytics tab styling */
+  .analytics-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  .stat-tile { padding: 16px; border-right: 1px solid var(--color-border-default); }
+  .stat-tile:last-child { border-right: none; }
+  .stat-tile .lab { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; font-family: var(--font-ui); color: var(--color-text-tertiary); }
+  .stat-tile .val { font-size: 26px; font-weight: 700; color: var(--color-text-primary); margin-top: 6px; letter-spacing: -0.3px; }
+  .stat-tile .sub { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; font-family: var(--font-ui); }
+
+  .chart-wrap { padding: 16px; height: 240px; position: relative; }
+  .chart-wrap svg { width: 100%; height: 100%; display: block; }
+
+  /* SKU table */
+  table.sku { width: 100%; border-collapse: collapse; }
+  table.sku th, table.sku td { padding: 10px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--color-border-default); }
+  table.sku th { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--color-text-tertiary); font-family: var(--font-ui); background: #F7F7F7; }
+  table.sku tr:hover td { background: #FAFAFA; }
+  table.sku td.num { text-align: right; font-family: var(--font-ui); font-weight: 600; }
+  table.sku .sku-id { font-family: var(--font-ui); font-size: 12px; color: var(--blue-600); font-weight: 600; }
+
+  /* Heatmap (state-wise) */
+  .heat { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; padding: 16px; }
+  .heat .cell { aspect-ratio: 1; border-radius: 4px; position: relative; cursor: pointer; }
+  .heat .cell .hl { position: absolute; bottom: 4px; left: 4px; right: 4px; font-size: 9px; color: rgba(255,255,255,0.95); font-family: var(--font-ui); font-weight: 600; line-height: 1; }
+  .heat .cell .hl small { display:block; font-size:8px; opacity:.85; font-weight:500; margin-top:1px; }
+
+  /* Donut */
+  .donut-wrap { display: grid; grid-template-columns: 140px 1fr; gap: 16px; padding: 16px; align-items: center; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+  .donut-legend .l { display: flex; align-items: center; gap: 8px; }
+  .donut-legend i { width: 10px; height: 10px; border-radius: 2px; }
+  .donut-legend .v { margin-left: auto; font-family: var(--font-ui); font-weight: 600; color: var(--color-text-primary); }
+
+  /* Date range select */
+  .range {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--white-400);
+    border-radius: 6px; padding: 2px;
+    font-family: var(--font-ui); font-size: 12px;
+  }
+  .range button { border: none; background: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; color: var(--color-text-tertiary); font-weight: 500; font-family: var(--font-ui); font-size: 12px; }
+  .range button.active { background: #fff; color: var(--color-text-primary); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+  /* Trend mini-chart */
+  .trend-mini { height: 60px; }
+
+  /* Hide/show by tab */
+  [data-pane] { display: none; }
+  [data-pane].active { display: block; }
+
+  /* Pagination dots fix — make them buttons */
+  .dots { display: inline-flex; gap: 6px; }
+  .dots button { width: 18px; height: 6px; border-radius: 3px; background: var(--white-300); border: none; cursor: pointer; transition: background 150ms; padding: 0; }
+  .dots button.active { background: var(--red-500); width: 22px; }
+  .dots button:hover:not(.active) { background: var(--grey-300); }
+
+  /* Tweaks panel toggle */
+  body[data-density="comfortable"] .metric { padding: 20px; }
+  body[data-density="comfortable"] .card-body { padding: 20px; }
+
+  /* ── Persona hero blocks ── */
+  .persona-hero {
+    background: #fff;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-large);
+    padding: 20px;
+    margin-bottom: 20px;
+    display: grid; gap: 18px;
+  }
+  .persona-hero .ph-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .persona-hero .ph-title { font-size: 18px; font-weight: 600; color: var(--color-text-primary); }
+  .persona-hero .ph-sub { font-size: 13px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .persona-hero .ph-meta-pill {
+    font-size: 11px; font-family: var(--font-ui); font-weight: 600;
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--red-25); color: var(--red-700);
+  }
+  .ph-tasks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .ph-task {
+    background: var(--white-300); border: 1px solid var(--color-border-default); border-radius: var(--radius-medium);
+    padding: 14px; display: flex; flex-direction: column; gap: 6px;
+    cursor: pointer; transition: border-color 120ms, transform 120ms;
+  }
+  .ph-task:hover { border-color: var(--grey-300); transform: translateY(-1px); }
+  .ph-task .pt-cnt { font-size: 26px; font-weight: 700; font-family: var(--font-display); color: var(--color-text-primary); line-height: 1; }
+  .ph-task .pt-cnt.warn { color: var(--red-600); }
+  .ph-task .pt-cnt.amber { color: var(--yellow-700); }
+  .ph-task .pt-cnt.blue { color: var(--blue-600); }
+  .ph-task .pt-cnt.green { color: var(--green-600); }
+  .ph-task .pt-lab { font-size: 13px; font-weight: 600; color: var(--color-text-primary); margin-top: 4px; }
+  .ph-task .pt-sub { font-size: 11px; color: var(--color-text-tertiary); font-family: var(--font-ui); }
+
+  .ph-ops { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .ph-ops-card {
+    background: var(--white-300); border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-medium); padding: 18px;
+  }
+  .ph-ops-card .lab { font-size: 11px; font-weight: 600; color: var(--color-text-tertiary); font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.6px; }
+  .ph-ops-card .big { font-size: 36px; font-weight: 700; font-family: var(--font-display); color: var(--color-text-primary); margin-top: 8px; line-height: 1; }
+  .ph-ops-card .big small { font-size: 14px; color: var(--color-text-tertiary); font-weight: 500; margin-left: 8px; }
+  .ph-ops-card .meta { font-size: 13px; color: var(--color-text-secondary); margin-top: 10px; line-height: 1.5; }
+  .ph-ops-card .meta b { color: var(--red-600); font-weight: 600; }
+  .ph-ops-card .actions { display: flex; gap: 8px; margin-top: 14px; }
+
+  .ph-finance { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px; }
+  .ph-fin-card {
+    background: linear-gradient(135deg, #1B1D22 0%, #2A2D33 100%);
+    color: #fff; border-radius: var(--radius-medium);
+    padding: 18px; display: flex; flex-direction: column; gap: 0;
+    min-height: 138px;
+  }
+  .ph-fin-card.alt { background: var(--white-300); color: var(--color-text-primary); border: 1px solid var(--color-border-default); }
+  .ph-fin-card .lab { font-size: 11px; font-weight: 600; font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.6px; opacity: 0.7; }
+  .ph-fin-card.alt .lab { color: var(--color-text-tertiary); opacity: 1; }
+  .ph-fin-card .val { font-size: 28px; font-weight: 700; font-family: var(--font-display); margin-top: 8px; line-height: 1; }
+  .ph-fin-card .delta { font-size: 12px; margin-top: 6px; opacity: 0.85; font-family: var(--font-ui); font-weight: 500; }
+  .ph-fin-card .delta.up { color: #5BE39B; }
+  .ph-fin-card.alt .delta.up { color: var(--green-600); opacity: 1; }
+  .ph-fin-card.alt .delta.dn { color: var(--red-600); opacity: 1; }
+  .ph-fin-card .ac { margin-top: auto; font-size: 12px; font-weight: 600; opacity: 0.95; padding-top: 14px; cursor: pointer; }
+  .ph-fin-card.alt .ac { color: var(--blue-500); }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(13, 13, 13, 0.5); z-index: 999;
+    display: none; align-items: center; justify-content: center; padding: 24px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: var(--radius-large); box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    width: 100%; max-width: 880px; max-height: 84vh; overflow: hidden;
+    display: flex; flex-direction: column;
+    animation: modalIn 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes modalIn { from { transform: translateY(12px) scale(0.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+  .modal-head { padding: 18px 24px; border-bottom: 1px solid var(--color-border-default); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .modal-head h2 { font-size: 18px; font-weight: 600; color: var(--color-text-primary); }
+  .modal-head p { font-size: 13px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: var(--radius-medium); border: none; background: transparent;
+    cursor: pointer; color: var(--color-text-tertiary); display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { background: var(--white-300); color: var(--color-text-primary); }
+  .modal-body { padding: 0; overflow-y: auto; }
+  .wow-table { width: 100%; border-collapse: collapse; font-family: var(--font-ui); font-size: 13px; }
+  .wow-table thead th {
+    background: var(--white-300); border-bottom: 1px solid var(--color-border-default);
+    padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600;
+    color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.6px;
+    position: sticky; top: 0;
+  }
+  .wow-table thead th.r { text-align: right; }
+  .wow-table tbody td { padding: 12px 16px; border-bottom: 1px solid var(--color-border-default); color: var(--color-text-primary); }
+  .wow-table tbody td.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .wow-table tbody tr:hover { background: var(--white-300); }
+  .wow-table tbody tr.totals { font-weight: 600; background: var(--white-300); }
+  .wow-table tbody tr.totals td { border-top: 1px solid var(--color-border-default); }
+  .wow-stage { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+  .wow-stage i { width: 8px; height: 8px; border-radius: 999px; background: var(--blue-500); display: inline-block; }
+  .wow-stage.rto i { background: var(--yellow-500); }
+  .wow-stage.lost i { background: var(--red-500); }
+  .wow-stage.delivered i { background: var(--green-500); }
+  .wow-stage.picked i { background: var(--blue-400); }
+  .wow-stage.transit i { background: var(--blue-600); }
+  .delta-up { color: var(--green-600); font-weight: 600; }
+  .delta-dn { color: var(--red-600); font-weight: 600; }
+  .delta-flat { color: var(--color-text-tertiary); }
+  .modal-foot { padding: 14px 24px; border-top: 1px solid var(--color-border-default); display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #fff; }
+  .modal-foot .meta { font-size: 12px; color: var(--color-text-tertiary); font-family: var(--font-ui); }
+</style>
+</head>
+<body data-density="compact" data-persona="all">
+<div class="app">
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar">
+    <div class="sb-logo">DELHIVERY<small>ONE</small></div>
+
+    <!-- Persona switcher -->
+    <div class="sb-persona">
+      <div class="sb-persona-label">VIEW</div>
+      <div class="sb-icon persona-item active" data-persona="all" data-tip="All — Full overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      </div>
+      <div class="sb-icon persona-item" data-persona="owner" data-tip="Owner — Finance, delivery &amp; growth">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V10l9-7 9 7v11"/><path d="M9 21v-7h6v7"/></svg>
+      </div>
+      <div class="sb-icon persona-item" data-persona="support" data-tip="Support — Tasks, claims &amp; tickets · 11 to action">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 11-3.6-6.9"/><path d="M22 4l-9 9-3-3"/></svg>
+        <span class="pcount">11</span>
+      </div>
+      <div class="sb-icon persona-item" data-persona="operations" data-tip="Operations — Pickups &amp; manifesting · 9 pending">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v10H3z"/><path d="M14 10h5l2 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+        <span class="pcount">9</span>
+      </div>
+    </div>
+
+    <div class="sb-icons">
+      <div class="sb-icon active" title="Home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12L12 4l9 8M5 10v10h14V10"/></svg>
+      </div>
+      <div class="sb-icon" title="Orders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18l-2 13H5L3 7z"/><path d="M8 7V5a4 4 0 018 0v2"/></svg>
+        <span class="dot"></span>
+      </div>
+      <div class="sb-icon" title="Pickups">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v10H3z"/><path d="M14 10h5l2 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+      </div>
+      <div class="sb-icon" title="Exceptions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 22h20L12 2z"/><path d="M12 10v5M12 18v.01"/></svg>
+      </div>
+      <div class="sb-icon" title="Wallet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M16 12h3"/></svg>
+      </div>
+      <div class="sb-icon" title="Rate Calculator">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>
+      </div>
+      <div class="sb-icon" title="Analytics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="13" width="4" height="8"/><rect x="10" y="9" width="4" height="12"/><rect x="17" y="5" width="4" height="16"/></svg>
+      </div>
+      <div class="sb-icon" title="Reports">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+      </div>
+      <div class="sb-icon" title="Support">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 016 0c0 2-3 2-3 4M12 17v.01"/></svg>
+      </div>
+    </div>
+    <div class="sb-spacer"></div>
+    <div class="sb-icons">
+      <div class="sb-icon" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12c0-.5-.1-1-.2-1.4l2-1.6-2-3.5-2.4 1c-.7-.6-1.5-1-2.4-1.3L13.5 3h-3l-.5 2.2c-.9.3-1.7.7-2.4 1.3l-2.4-1-2 3.5 2 1.6c-.1.4-.2.9-.2 1.4s.1 1 .2 1.4l-2 1.6 2 3.5 2.4-1c.7.6 1.5 1 2.4 1.3l.5 2.2h3l.5-2.2c.9-.3 1.7-.7 2.4-1.3l2.4 1 2-3.5-2-1.6c.1-.4.2-.9.2-1.4z"/></svg>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <!-- ── TOPBAR ── -->
+    <header class="topbar">
+      <div class="crumb">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12L12 4l9 8M5 10v10h14V10"/></svg>
+        <b>Home</b>
+      </div>
+
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input placeholder="Search AWB, LR, Order ID, Ticket ID, Customer name…" />
+        <kbd>⌘ K</kbd>
+      </div>
+
+      <button class="top-btn" title="Tasks">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Tasks
+        <span class="pill">12</span>
+      </button>
+
+      <button class="top-btn" title="Notifications" style="width:36px;justify-content:center;padding:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+        <span class="ndot"></span>
+      </button>
+
+      <button class="client-pill">
+        <span class="swatch"></span>
+        <div style="text-align:left">
+          <div class="l1">Domestic</div>
+          <div class="l2">Edenivy Lifestyle</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+
+      <div class="avatar-btn">SM</div>
+    </header>
+
+    <!-- ── ALERT STRIP (carousel of critical alerts) ── -->
+    <div class="alert-strip" id="alertStrip">
+      <div class="pulse">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 22h20L12 2z"/><path d="M12 10v5M12 18v.01"/></svg>
+      </div>
+      <div class="label">Critical</div>
+      <div class="msg" id="alertMsg">
+        Pickup &amp; delivery operations in <b>Noida and Ghaziabad</b> are highly impacted due to ongoing protests. <a href="#">View affected shipments (24)</a>
+      </div>
+      <div class="alert-pager">
+        <button id="alertPrev"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <span id="alertCount">1 / 3</span>
+        <button id="alertNext"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 18l6-6-6-6"/></svg></button>
+      </div>
+      <button class="btn btn-sm btn-ghost">Acknowledge</button>
+      <span class="dismiss">✕</span>
+    </div>
+
+    <!-- ── PAGE TABS ── -->
+    <div class="page-tabs">
+      <div class="page-tab active" data-tab="overview">Overview</div>
+      <div class="page-tab" data-tab="analytics">Analytics</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- OVERVIEW PANE -->
+    <!-- ═══════════════════════════════════════════ -->
+    <main class="page active" data-pane="overview">
+      <!-- Title + greeting -->
+      <div class="page-title-row">
+        <div class="greeting">
+          <h1>Good afternoon, Sumit 👋</h1>
+          <p>You have <b>14 actions waiting</b> on you. Start with high-risk orders and bad addresses.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            Today &nbsp;·&nbsp; Tue, 5 May
+          </button>
+          <button class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+            Create Shipment
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ PERSONA HERO: SUPPORT ═══ -->
+      <div class="persona-hero" data-persona-only="support">
+        <div class="ph-head">
+          <div>
+            <div class="ph-title">Tasks for you · 11 to action</div>
+            <div class="ph-sub">Customer issues, stuck shipments and tickets needing your input. Sorted by SLA breach risk.</div>
+          </div>
+          <span class="ph-meta-pill">3 breaching SLA in &lt; 2h</span>
+        </div>
+        <div class="ph-tasks">
+          <div class="ph-task">
+            <div class="pt-cnt warn">7</div>
+            <div class="pt-lab">Tickets need your input</div>
+            <div class="pt-sub">3 customer-facing · oldest 18h</div>
+          </div>
+          <div class="ph-task">
+            <div class="pt-cnt warn">4</div>
+            <div class="pt-lab">Open claims awaiting docs</div>
+            <div class="pt-sub">₹38,420 · 1 expires today</div>
+          </div>
+          <div class="ph-task">
+            <div class="pt-cnt amber">86</div>
+            <div class="pt-lab">NDR — call customer</div>
+            <div class="pt-sub">Resolve before 6pm cut-off</div>
+          </div>
+          <div class="ph-task">
+            <div class="pt-cnt amber">42</div>
+            <div class="pt-lab">Bad addresses to fix</div>
+            <div class="pt-sub">Auto-suggest available · 38</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ PERSONA HERO: OPERATIONS ═══ -->
+      <div class="persona-hero" data-persona-only="operations">
+        <div class="ph-head">
+          <div>
+            <div class="ph-title">Floor view · Tue, 5 May</div>
+            <div class="ph-sub">Pickups due, manifesting backlog and exceptions blocking dispatch.</div>
+          </div>
+          <span class="ph-meta-pill">Cut-off in 2h 14m</span>
+        </div>
+        <div class="ph-ops">
+          <div class="ph-ops-card">
+            <div class="lab">Pickup requests for today</div>
+            <div class="big">9 <small>scheduled · 3 confirmed</small></div>
+            <div class="meta">Next slot <b>3:00 – 6:00 PM</b> · 4 pickups · ABC Couriers (2), DTDC (1), Delhivery Express (1)</div>
+            <div class="actions">
+              <button class="btn btn-ghost">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v10H3z"/><path d="M14 10h5l2 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+                Schedule pickup
+              </button>
+              <button class="btn btn-secondary">View all 9</button>
+            </div>
+          </div>
+          <div class="ph-ops-card">
+            <div class="lab">Manifesting backlog</div>
+            <div class="big">312 <small>shipments unmanifested</small></div>
+            <div class="meta"><b>200 high-risk</b> orders need address verification before manifest. 38 cargo orders pending weight confirmation.</div>
+            <div class="actions">
+              <button class="btn btn-primary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+                Bulk manifest
+              </button>
+              <button class="btn btn-secondary">Resolve high-risk first</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSIGHTS / TASKS FOR YOU (3 personalised insight cards) -->
+      <div class="insights" data-hide="support operations">
+        <div class="insight-card">
+          <div class="insight-icon amber">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 22h20L12 2z"/><path d="M12 10v5M12 18v.01"/></svg>
+          </div>
+          <div>
+            <div class="lab">Insight · Action</div>
+            <div class="ti">200 high-risk orders likely to RTO this week</div>
+            <a class="lk">Resolve all →</a>
+          </div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-icon blue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 3 5-7"/></svg>
+          </div>
+          <div>
+            <div class="lab">Insight · Performance</div>
+            <div class="ti">Delivery rate dropped 2.4% in Bengaluru zone</div>
+            <a class="lk">View zone breakdown →</a>
+          </div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-icon green">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <div>
+            <div class="lab">Insight · Opportunity</div>
+            <div class="ti">Switch 38 cargo orders to surface — save ₹14,200</div>
+            <a class="lk">Review &amp; switch →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MAIN GRID ── -->
+      <div class="grid">
+
+        <!-- ─── LEFT COL ─── -->
+        <div>
+
+          <!-- KEY METRICS -->
+          <div class="card">
+            <div class="card-head">
+              <h3>Key metrics
+                <span class="chip chip-info">Today &amp; in-flight</span>
+              </h3>
+              <div class="range" data-key="metrics-range">
+                <button>Today</button>
+                <button class="active">7D</button>
+                <button>14D</button>
+                <button>30D</button>
+              </div>
+            </div>
+            <div class="metrics-grid">
+
+              <div class="metric">
+                <div class="lab">Pending Manifest</div>
+                <div class="num">1,284</div>
+                <div class="actions"><button class="btn btn-sm btn-dark">Manifest now</button></div>
+              </div>
+
+              <div class="metric">
+                <div class="lab">To Be Shipped</div>
+                <div class="num">542</div>
+                <div class="delta warn">⚠ 200 high-risk orders</div>
+                <div class="actions"><button class="btn btn-sm btn-dark">Add to Pickup</button><button class="btn btn-sm btn-ghost">View list</button></div>
+              </div>
+
+              <div class="metric">
+                <div class="lab">In Transit</div>
+                <div class="num">8,419</div>
+                <div class="actions"><button class="btn btn-sm btn-ghost">View tracking →</button></div>
+              </div>
+
+              <div class="metric">
+                <div class="lab">Delivered</div>
+                <div class="num">1,241</div>
+                <div class="actions"><button class="btn btn-sm btn-ghost">View &amp; download</button></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- EXCEPTIONS -->
+          <div class="card" data-hide="owner">
+            <div class="card-head">
+              <h3>Exceptions <span class="chip chip-error">Needs your action</span></h3>
+              <a class="btn-link">View all exceptions →</a>
+            </div>
+            <div class="exceptions-grid">
+              <div class="exc">
+                <div class="exc-icon ndr">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 22h20L12 2z"/><path d="M12 10v5M12 18v.01"/></svg>
+                </div>
+                <div class="grow">
+                  <div class="lab">NDR — Awaiting your input</div>
+                  <div class="head">86</div>
+                  <div class="sub">Pending customer outreach.</div>
+                </div>
+                <button class="btn btn-sm btn-ghost">Resolve NDRs</button>
+              </div>
+              <div class="exc">
+                <div class="exc-icon addr">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div class="grow">
+                  <div class="lab">Bad Addresses</div>
+                  <div class="head">21</div>
+                  <div class="sub">14 auto-fixable now.</div>
+                </div>
+                <button class="btn btn-sm btn-ghost">Fix addresses</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- UPCOMING PICKUPS -->
+          <div class="card" data-hide="owner support">
+            <div class="card-head">
+              <h3>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v10H3z"/><path d="M14 10h5l2 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+                Upcoming Pickups
+                <span class="chip chip-success">2 scheduled</span>
+              </h3>
+              <a class="btn-link">View all →</a>
+            </div>
+            <div class="pickup-list">
+              <div class="pickup">
+                <span class="stamp">📦 1st Pickup</span>
+                <div class="row">
+                  <div class="name">Goa Warehouse</div>
+                  <button class="btn btn-sm btn-ghost">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12M5 12l7 7 7-7M3 21h18"/></svg>
+                    Manifest
+                  </button>
+                </div>
+                <div class="meta">
+                  <span><b>Today</b> · 11:00 – 14:00</span>
+                  <span>·</span>
+                  <span><b>1</b> AWBs</span>
+                </div>
+                <div class="status-row">
+                  <span class="chip chip-success">● Out for Pickup</span>
+                  <a class="btn-link">Track FE →</a>
+                </div>
+              </div>
+              <div class="pickup">
+                <span class="stamp" style="background:var(--blue-25);color:var(--blue-700);border-color:var(--blue-100);">📦 1st Pickup</span>
+                <div class="row">
+                  <div class="name">Ashwin P · Hyderabad</div>
+                  <button class="btn btn-sm btn-ghost">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12M5 12l7 7 7-7M3 21h18"/></svg>
+                    Manifest
+                  </button>
+                </div>
+                <div class="meta">
+                  <span><b>Tomorrow</b> · 09:00 – 12:00</span>
+                  <span>·</span>
+                  <span><b>1</b> AWBs</span>
+                </div>
+                <div class="status-row">
+                  <span class="chip chip-info">⏱ Scheduled</span>
+                  <a class="btn-link">Reschedule</a>
+                </div>
+              </div>
+            </div>
+            <div style="border-top:1px solid var(--color-border-default); padding:10px 16px; display:flex;align-items:center;gap:8px;font-size:12px;color:var(--color-text-tertiary);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16v.01"/></svg>
+              Pickup happens during the selected slot. Check <a href="#" style="color:var(--blue-500);font-weight:600">pickup guidelines</a> to keep shipments ready.
+            </div>
+          </div>
+
+          <!-- PERFORMANCE FUNNEL (collapsed by default) -->
+          <div class="card collapsible" data-hide="support" id="funnelCard">
+            <div class="card-head">
+              <h3>Performance funnel <span class="chip chip-info">Last 14 days</span></h3>
+              <a class="btn-link expand-link" data-target="funnelDetails">View details ↓</a>
+            </div>
+            <div class="kpi-row">
+              <div class="kpi">
+                <div class="lab">Delivered</div>
+                <div class="val">87.5%</div>
+              </div>
+              <div class="kpi">
+                <div class="lab">RTO</div>
+                <div class="val">3.8%</div>
+              </div>
+              <div class="kpi">
+                <div class="lab">Time to delivery</div>
+                <div class="val">2.1<small>d</small></div>
+              </div>
+              <div class="kpi">
+                <div class="lab">First-attempt</div>
+                <div class="val">87.5%</div>
+              </div>
+            </div>
+            <div class="details" id="funnelDetails" hidden>
+              <div class="funnel">
+                <div class="funnel-head">
+                  <span>Stage</span>
+                  <span class="r">Shipments</span>
+                  <span class="r">Share</span>
+                  <span class="r">vs last 14D</span>
+                </div>
+                <div class="funnel-row">
+                  <div class="stage"><i></i> Manifested</div>
+                  <div class="num">48,210</div>
+                  <div class="pct">100%</div>
+                  <div class="delta up">↑ 6.2%</div>
+                </div>
+                <div class="funnel-row">
+                  <div class="stage picked"><i></i> Picked</div>
+                  <div class="num">47,120</div>
+                  <div class="pct">97.7%</div>
+                  <div class="delta up">↑ 0.4 pp</div>
+                </div>
+                <div class="funnel-row">
+                  <div class="stage transit"><i></i> In transit</div>
+                  <div class="num">44,890</div>
+                  <div class="pct">93.1%</div>
+                  <div class="delta neutral">— 0.1 pp</div>
+                </div>
+                <div class="funnel-row">
+                  <div class="stage delivered"><i></i> Delivered</div>
+                  <div class="num">42,180</div>
+                  <div class="pct">87.5%</div>
+                  <div class="delta up">↑ 0.8 pp</div>
+                </div>
+                <div class="funnel-row">
+                  <div class="stage rto"><i></i> RTO</div>
+                  <div class="num">1,820</div>
+                  <div class="pct">3.8%</div>
+                  <div class="delta dn">↑ 0.3 pp</div>
+                </div>
+                <div class="funnel-row">
+                  <div class="stage lost"><i></i> Lost / damaged</div>
+                  <div class="num">124</div>
+                  <div class="pct">0.26%</div>
+                  <div class="delta up">↓ 0.04 pp</div>
+                </div>
+              </div>
+              <div class="time-stats">
+                <div class="ts">
+                  <div class="lab">Time to pickup</div>
+                  <div class="val">14h <small>22m</small></div>
+                  <div class="delta" style="color: var(--green-600); font-weight:600;">↓ 38m</div>
+                </div>
+                <div class="ts">
+                  <div class="lab">Time to delivery</div>
+                  <div class="val">2.1 <small>days</small></div>
+                  <div class="delta" style="color: var(--red-500); font-weight:600;">↑ 4h</div>
+                </div>
+                <div class="ts">
+                  <div class="lab">First attempt</div>
+                  <div class="val">38h <small>10m</small></div>
+                  <div class="delta" style="color: var(--color-text-tertiary);">— unchanged</div>
+                </div>
+                <div class="ts">
+                  <div class="lab">First-attempt rate</div>
+                  <div class="val">87.5%</div>
+                  <div class="delta" style="color: var(--green-600); font-weight:600;">↑ 1.2 pp</div>
+                </div>
+              </div>
+              <div style="padding:12px 16px 4px;display:flex;justify-content:flex-end;">
+                <a class="btn-link" id="openWowModal">View week-on-week trend →</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- RTO REASONS (collapsed by default) -->
+          <div class="card collapsible" data-hide="support" id="rtoCard">
+            <div class="card-head">
+              <h3>RTO reasons <span class="chip chip-warn">111 RTOs · 14 days</span></h3>
+              <a class="btn-link expand-link" data-target="rtoDetails-real">View details ↓</a>
+            </div>
+            <div class="rto-summary">
+              <div class="rs-top">
+                <i style="background:var(--red-500)"></i>
+                <span>Top reason · <b>Customer not contactable</b></span>
+                <span class="rs-num">42 <small>(38%)</small></span>
+              </div>
+              <div class="rs-top">
+                <i style="background:var(--orange-500)"></i>
+                <span>2nd · <b>Refused at delivery</b></span>
+                <span class="rs-num">28 <small>(25%)</small></span>
+              </div>
+            </div>
+            <div class="details" id="rtoDetails-real" hidden>
+              <div class="rto-list">
+                <div class="rto-row">
+                  <div class="rl"><i style="background:var(--red-500)"></i> Customer not contactable</div>
+                  <div class="num">42</div><div class="pct">38%</div>
+                </div>
+                <div class="rto-row">
+                  <div class="rl"><i style="background:var(--orange-500)"></i> Refused at delivery</div>
+                  <div class="num">28</div><div class="pct">25%</div>
+                </div>
+                <div class="rto-row">
+                  <div class="rl"><i style="background:var(--yellow-500)"></i> Address incomplete</div>
+                  <div class="num">19</div><div class="pct">17%</div>
+                </div>
+                <div class="rto-row">
+                  <div class="rl"><i style="background:var(--blue-500)"></i> Wrong product expectation</div>
+                  <div class="num">14</div><div class="pct">13%</div>
+                </div>
+                <div class="rto-row">
+                  <div class="rl"><i style="background:var(--grey-300)"></i> Other</div>
+                  <div class="num">8</div><div class="pct">7%</div>
+                </div>
+              </div>
+              <div style="padding:12px 16px 4px;display:flex;justify-content:flex-end;">
+                <a class="btn-link">View RTO AWBs →</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUPPORT + CLAIMS — compact summary -->
+          <div data-hide="owner operations" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+            <div class="card sc-summary" style="margin:0">
+              <div class="card-head">
+                <h3>Support</h3>
+                <a class="btn-link">View all →</a>
+              </div>
+              <div class="sc-body">
+                <div class="sc-big">3 <small>of 7 need your input</small></div>
+                <div class="sc-meta">Oldest: <b>2d open</b> · 1 SLA breach risk</div>
+              </div>
+            </div>
+
+            <div class="card sc-summary" style="margin:0">
+              <div class="card-head">
+                <h3>Claims</h3>
+                <a class="btn-link">View all →</a>
+              </div>
+              <div class="sc-body">
+                <div class="sc-big">2 <small>of 4 need your input</small></div>
+                <div class="sc-meta">Worth <b>₹5,350</b> · 1 expires in <b>11h</b></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BEST PRACTICES -->
+          <div class="card" data-hide="owner operations">
+            <div class="card-head">
+              <h3>Practices that move the needle <span class="chip chip-success">Personalised</span></h3>
+              <a class="btn-link">See all benchmarks →</a>
+            </div>
+            <div class="practices">
+              <div class="practice">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12c0 5-4 9-9 9s-9-4-9-9 4-9 9-9c2.5 0 4.7 1 6.4 2.6"/><path d="M22 4L13 13l-3-3"/></svg>
+                <div>
+                  <div class="ti">Verify pincode at order entry</div>
+                  <div class="sub">Cuts bad-address NDRs by ~22% on average.</div>
+                </div>
+              </div>
+              <div class="practice">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <div>
+                  <div class="ti">Manifest before 2pm cutoff</div>
+                  <div class="sub">87% pickup-same-day vs 54% post-cutoff in Mumbai.</div>
+                </div>
+              </div>
+              <div class="practice">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l4 4L21 4"/></svg>
+                <div>
+                  <div class="ti">Auto-call for NDR within 4h</div>
+                  <div class="sub">Boosts first-attempt delivery by 8 percentage points.</div>
+                </div>
+              </div>
+              <div class="practice">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+                <div>
+                  <div class="ti">Switch above-5kg to surface</div>
+                  <div class="sub">Save ~24% on cost with same SLA on inter-state.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── RIGHT RAIL ─── -->
+        <aside>
+          <!-- Wallet card -->
+          <div class="wallet-card" data-hide="support operations">
+            <div class="wallet-row">
+              <div class="exc-icon" style="width:36px;height:36px;background:var(--green-25);color:var(--green-700);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M16 12h3"/></svg>
+              </div>
+              <div class="grow">
+                <div class="lab">Wallet Balance</div>
+                <div class="val">₹1,147.68</div>
+                <div class="sub-line">auto-topup at ₹500</div>
+              </div>
+              <button class="btn btn-sm btn-primary">Recharge</button>
+            </div>
+            <div class="wallet-row">
+              <div class="exc-icon" style="width:36px;height:36px;background:var(--blue-25);color:var(--blue-600);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M5 9l7-7 7 7"/></svg>
+              </div>
+              <div class="grow">
+                <div class="lab">COD to remit</div>
+                <div class="val">₹84,210.00</div>
+                <div class="sub-line">next on 7 May</div>
+              </div>
+              <button class="btn btn-sm btn-ghost">Statement</button>
+            </div>
+          </div>
+
+          <!-- Quick actions -->
+          <div style="margin-top:16px">
+            <div class="qa-grid">
+              <div class="qa">
+                <div class="qa-icon" style="background:var(--blue-25);color:var(--blue-600)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h2M13 11h2M9 15h2"/></svg>
+                </div>
+                <div class="qa-title">Rate Calculator</div>
+                <div class="qa-sub">Estimate cost · 6 modes</div>
+              </div>
+              <div class="qa">
+                <div class="qa-icon" style="background:var(--cardbox-50);color:var(--cardbox-700)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v10H3z"/><path d="M14 10h5l2 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+                </div>
+                <div class="qa-title">Schedule Pickup</div>
+                <div class="qa-sub">Domestic &amp; cargo</div>
+              </div>
+              <div class="qa">
+                <div class="qa-icon" style="background:var(--yellow-25);color:var(--yellow-700)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+                </div>
+                <div class="qa-title">Bulk Upload</div>
+                <div class="qa-sub">CSV · Excel · API</div>
+              </div>
+              <div class="qa">
+                <div class="qa-icon" style="background:var(--purple-500);background-color:rgba(124,58,237,0.1);color:var(--purple-500)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8a4 4 0 014 4M12 12h.01"/></svg>
+                </div>
+                <div class="qa-title">Knowledge Base</div>
+                <div class="qa-sub">Guides &amp; how-tos</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TASKS FOR YOU -->
+          <div class="card" data-hide="owner" style="margin-top:16px">
+            <div class="card-head">
+              <h3>Tasks for you <span class="chip chip-error">5 due today</span></h3>
+              <a class="btn-link">All →</a>
+            </div>
+            <div class="tasks-list">
+              <label class="task">
+                <input type="checkbox" />
+                <div>
+                  <div class="ti">Review &amp; approve 14 high-risk orders</div>
+                  <div class="sub">Bengaluru zone · auto-flagged</div>
+                </div>
+              </label>
+              <label class="task">
+                <input type="checkbox" />
+                <div>
+                  <div class="ti">Upload weight proof for TKT-91204</div>
+                  <div class="sub">Support · due 5pm</div>
+                </div>
+              </label>
+              <label class="task">
+                <input type="checkbox" />
+                <div>
+                  <div class="ti">Confirm pickup slot for tomorrow</div>
+                  <div class="sub">Hyderabad · Ashwin P</div>
+                </div>
+              </label>
+              <label class="task">
+                <input type="checkbox" checked />
+                <div>
+                  <div class="ti" style="text-decoration:line-through;color:var(--color-text-tertiary)">Verify GST for COD remittance</div>
+                  <div class="sub">Done · 1h ago</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- WHAT'S NEW -->
+          <div class="card" style="margin-top:16px;overflow:hidden;padding:0;background:transparent;border:none;">
+            <div class="news-card">
+              <div class="news-tag">New · Just shipped</div>
+              <h4>One-click WhatsApp NDR resolution</h4>
+              <p>Live for 12 pin-code clusters.</p>
+              <div style="display:flex;gap:12px;margin-top:14px;align-items:center;">
+                <div class="pill">Try it now →</div>
+                <a style="color:#C4C4C4;font-size:12px;line-height:1;">Watch 90s demo</a>
+              </div>
+            </div>
+
+            <div style="background:#fff;border:1px solid var(--color-border-default);border-radius:0 0 var(--radius-large) var(--radius-large);margin-top:-8px;padding-top:8px;">
+              <div class="card-head" style="border-bottom:none;padding-bottom:6px">
+                <h3 style="font-size:13px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:1px;font-family:var(--font-ui);font-weight:600;">More updates</h3>
+                <a class="btn-link">All →</a>
+              </div>
+              <div class="news-list">
+                <div class="news-item">
+                  <div class="news-icon" style="background:var(--blue-25);color:var(--blue-500)">🛡️</div>
+                  <div class="grow"><div class="ti">Delhivery Protect — up to ₹30,000 per shipment</div><div class="sub">Loss &amp; damage cover, ₹4 per shipment</div></div>
+                  <span class="new">NEW</span>
+                </div>
+                <div class="news-item">
+                  <div class="news-icon" style="background:var(--orange-400);background-color:rgba(231,115,55,0.12);color:var(--orange-500)">🛒</div>
+                  <div class="grow"><div class="ti">Connect WooCommerce in one click</div><div class="sub">Auto-fetch &amp; push tracking back</div></div>
+                </div>
+                <div class="news-item">
+                  <div class="news-icon" style="background:var(--cardbox-50);color:var(--cardbox-700)">📦</div>
+                  <div class="grow"><div class="ti">Direct intracity shipping</div><div class="sub">Bikes &amp; trucks, same-day in 8 cities</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PROMO / "not-an-ad" content card -->
+          <div class="promo" data-hide="support operations" style="margin-top:16px">
+            <div class="promo-body">
+              <div class="promo-eyebrow">Shipper Spotlight</div>
+              <h4>How Edenivy lifted first-attempt delivery to 92%</h4>
+              <div class="stat">
+                <div><div class="n">+8.2pp</div><div class="l">First-attempt</div></div>
+              </div>
+              <a class="lk">Read the playbook →</a>
+            </div>
+            <div class="promo-art">
+              <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                <rect x="14" y="22" width="40" height="36" rx="2" fill="#B88B5C" opacity=".55"/>
+                <rect x="22" y="14" width="40" height="36" rx="2" fill="#B88B5C"/>
+                <path d="M22 14 L42 14 L42 32 L32 24 L22 32 Z" fill="#7B5D3D"/>
+                <circle cx="58" cy="58" r="10" fill="#ED1B36"/>
+                <path d="M54 58 L57 61 L62 55" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- EDUCATION -->
+          <div class="card" data-hide="support operations" style="margin-top:16px">
+            <div class="card-head">
+              <h3>Learn &amp; Train</h3>
+              <a class="btn-link">All sessions →</a>
+            </div>
+            <div class="edu">
+              <div class="edu-card">
+                <div class="lab" style="color:var(--blue-600)">Live · Tomorrow</div>
+                <div class="ti">Mastering NDR resolution</div>
+                <div class="sub">A 45-min walkthrough with the operations team.</div>
+                <div class="meta">📅 6 May · 4pm IST &nbsp;·&nbsp; 312 enrolled</div>
+              </div>
+              <div class="edu-card">
+                <div class="lab" style="color:var(--cardbox-700)">Course · 6 modules</div>
+                <div class="ti">Reduce RTO by 25% in 30 days</div>
+                <div class="sub">Self-paced playbook for high-volume sellers.</div>
+                <div class="meta">⏱ 1h 20m &nbsp;·&nbsp; ⭐ 4.8</div>
+              </div>
+            </div>
+          </div>
+
+        </aside>
+      </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ANALYTICS PANE -->
+    <!-- ═══════════════════════════════════════════ -->
+    <main class="page" data-pane="analytics">
+      <div class="page-title-row">
+        <div class="greeting">
+          <h1>Business analytics</h1>
+          <p>Revenue, orders, SKU performance and geographic spread.</p>
+        </div>
+        <div class="page-actions">
+          <div class="range" style="background:#fff;border:1px solid var(--color-border-default)" data-key="ana-range">
+            <button>7D</button>
+            <button class="active">14D</button>
+            <button>30D</button>
+            <button>90D</button>
+          </div>
+          <button class="btn btn-ghost">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M5 12l7 7 7-7"/></svg>
+            Export
+          </button>
+        </div>
+      </div>
+
+      <!-- Top KPI strip -->
+      <div class="card">
+        <div class="metrics-grid">
+          <div class="stat-tile">
+            <div class="lab">Revenue (14D)</div>
+            <div class="val">₹38.4L</div>
+            <div class="sub"><b style="color:var(--green-600)">↑ 12.3%</b> vs prev 14D</div>
+          </div>
+          <div class="stat-tile">
+            <div class="lab">Avg. Order Value</div>
+            <div class="val">₹824</div>
+            <div class="sub"><b style="color:var(--green-600)">↑ ₹38</b> vs prev</div>
+          </div>
+          <div class="stat-tile">
+            <div class="lab">Orders Delivered</div>
+            <div class="val">42,180</div>
+            <div class="sub"><b style="color:var(--green-600)">↑ 6.4%</b> vs prev</div>
+          </div>
+          <div class="stat-tile">
+            <div class="lab">Realised Revenue</div>
+            <div class="val">₹34.7L</div>
+            <div class="sub">After RTO &amp; refunds · 90.4% net</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trend + COD/Prepaid -->
+      <div class="analytics-grid" style="margin-top:16px">
+        <div class="card" style="margin:0">
+          <div class="card-head">
+            <h3>Revenue trend, day-on-day</h3>
+            <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--color-text-tertiary);font-family:var(--font-ui)">
+              <span><i style="display:inline-block;width:10px;height:3px;background:var(--red-500);vertical-align:middle"></i> Revenue</span>
+              <span><i style="display:inline-block;width:10px;height:3px;background:var(--blue-500);vertical-align:middle"></i> Orders</span>
+            </div>
+          </div>
+          <div class="chart-wrap" id="revenueChart">
+            <!-- chart drawn via JS -->
+          </div>
+        </div>
+
+        <div class="card" style="margin:0">
+          <div class="card-head">
+            <h3>COD vs Prepaid</h3>
+            <span class="chip chip-info">14 days</span>
+          </div>
+          <div class="donut-wrap">
+            <svg viewBox="0 0 42 42" width="140" height="140">
+              <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#F2F2F2" stroke-width="6"/>
+              <!-- COD 62% -->
+              <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#CF9F02" stroke-width="6"
+                      stroke-dasharray="62 38" stroke-dashoffset="25" transform="rotate(-90 21 21)"/>
+              <!-- Prepaid 38% appears as remainder -->
+              <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#1BA86E" stroke-width="6"
+                      stroke-dasharray="38 62" stroke-dashoffset="-37" transform="rotate(-90 21 21)"/>
+              <text x="21" y="20" text-anchor="middle" font-family="Inter" font-size="6" font-weight="700" fill="#0D0D0D">42,180</text>
+              <text x="21" y="26" text-anchor="middle" font-family="Inter" font-size="3.2" fill="#666">orders</text>
+            </svg>
+            <div class="donut-legend">
+              <div class="l"><i style="background:var(--yellow-500)"></i> COD <span class="v">62% · 26,152</span></div>
+              <div class="l" style="margin-left:18px;font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-ui);font-weight:500">Revenue ₹22.1L</div>
+              <div class="l"><i style="background:var(--green-500)"></i> Prepaid <span class="v">38% · 16,028</span></div>
+              <div class="l" style="margin-left:18px;font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-ui);font-weight:500">Revenue ₹16.3L</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top SKUs + NDR reasons -->
+      <div class="analytics-grid" style="margin-top:16px">
+        <div class="card" style="margin:0">
+          <div class="card-head">
+            <h3>Top selling SKUs</h3>
+            <a class="btn-link">View all SKUs →</a>
+          </div>
+          <table class="sku">
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Title</th>
+                <th class="num" style="text-align:right">Shipments</th>
+                <th class="num" style="text-align:right">Delivered</th>
+                <th class="num" style="text-align:right">Revenue</th>
+                <th class="num" style="text-align:right">RTO%</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="sku-id">EDV-COT-014</span></td><td>Cotton kurti — Indigo, M</td><td class="num">2,140</td><td class="num">1,898</td><td class="num">₹6.2L</td><td class="num" style="color:var(--green-600)">2.1%</td></tr>
+              <tr><td><span class="sku-id">EDV-DUP-007</span></td><td>Banarasi dupatta — Maroon</td><td class="num">1,820</td><td class="num">1,612</td><td class="num">₹4.8L</td><td class="num" style="color:var(--yellow-700)">3.7%</td></tr>
+              <tr><td><span class="sku-id">EDV-SAR-021</span></td><td>Cotton silk saree — Olive</td><td class="num">1,492</td><td class="num">1,290</td><td class="num">₹4.1L</td><td class="num" style="color:var(--red-600)">5.2%</td></tr>
+              <tr><td><span class="sku-id">EDV-PAL-009</span></td><td>Palazzo set — Beige, L</td><td class="num">1,118</td><td class="num">1,001</td><td class="num">₹3.0L</td><td class="num" style="color:var(--green-600)">2.4%</td></tr>
+              <tr><td><span class="sku-id">EDV-BLZ-003</span></td><td>Embroidered blouse — XS</td><td class="num">980</td><td class="num">812</td><td class="num">₹2.6L</td><td class="num" style="color:var(--red-600)">6.1%</td></tr>
+              <tr><td><span class="sku-id">EDV-LEH-018</span></td><td>Lehenga — Festive Red</td><td class="num">704</td><td class="num">622</td><td class="num">₹4.4L</td><td class="num" style="color:var(--yellow-700)">3.2%</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card" style="margin:0">
+          <div class="card-head">
+            <h3>NDR reasons</h3>
+            <span class="chip chip-warn">86 NDRs · 14D</span>
+          </div>
+          <div class="rto-list" style="padding:0 16px 16px">
+            <div class="rto-row">
+              <div class="rl"><i style="background:var(--red-500)"></i> Customer not contactable</div>
+              <div class="num">31</div><div class="pct">36%</div>
+            </div>
+            <div class="rto-row">
+              <div class="rl"><i style="background:var(--orange-500)"></i> Customer unavailable</div>
+              <div class="num">22</div><div class="pct">26%</div>
+            </div>
+            <div class="rto-row">
+              <div class="rl"><i style="background:var(--yellow-500)"></i> Address incomplete</div>
+              <div class="num">14</div><div class="pct">16%</div>
+            </div>
+            <div class="rto-row">
+              <div class="rl"><i style="background:var(--blue-500)"></i> COD not ready</div>
+              <div class="num">11</div><div class="pct">13%</div>
+            </div>
+            <div class="rto-row">
+              <div class="rl"><i style="background:var(--purple-500)"></i> Reschedule requested</div>
+              <div class="num">5</div><div class="pct">6%</div>
+            </div>
+            <div class="rto-row">
+              <div class="rl"><i style="background:var(--grey-300)"></i> Other</div>
+              <div class="num">3</div><div class="pct">3%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map heatmap -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-head">
+          <h3>Geo heat — orders delivered</h3>
+          <div style="display:flex;gap:12px;align-items:center;font-size:12px;color:var(--color-text-tertiary);font-family:var(--font-ui)">
+            <span>Low</span>
+            <span style="display:inline-flex;gap:2px">
+              <i style="width:14px;height:10px;background:#FDE8EB;border-radius:2px;display:inline-block"></i>
+              <i style="width:14px;height:10px;background:#F9B3BC;border-radius:2px;display:inline-block"></i>
+              <i style="width:14px;height:10px;background:#F04158;border-radius:2px;display:inline-block"></i>
+              <i style="width:14px;height:10px;background:#C5172D;border-radius:2px;display:inline-block"></i>
+              <i style="width:14px;height:10px;background:#770E1B;border-radius:2px;display:inline-block"></i>
+            </span>
+            <span>High</span>
+            <a class="btn-link">View on map →</a>
+          </div>
+        </div>
+        <div class="heat" id="heat"></div>
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<!-- Tweaks panel mounting point -->
+<div id="tweaks-root"></div>
+
+<!-- React + Babel for tweaks -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx" data-presets="env,react"></script>
+<script type="text/babel" data-presets="env,react">
+const { useEffect } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "greetingName": "Sumit",
+  "showAlertStrip": true,
+  "alertSeverity": "critical",
+  "showInsights": true,
+  "metricEmphasis": "actions",
+  "density": "compact",
+  "promoStyle": "spotlight",
+  "showPractices": true
+}/*EDITMODE-END*/;
+
+function TweaksApp() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  useEffect(() => {
+    const h1 = document.querySelector('.greeting h1');
+    if (h1) h1.innerHTML = `Good afternoon, ${tweaks.greetingName} 👋`;
+
+    const strip = document.getElementById('alertStrip');
+    if (strip) strip.style.display = tweaks.showAlertStrip ? 'flex' : 'none';
+
+    if (strip) {
+      const map = {
+        critical: { bg: 'var(--red-25)', border: 'var(--red-100)', label: 'var(--red-700)', msg: 'var(--red-800)', pulse: 'var(--red-500)' },
+        warning:  { bg: 'var(--yellow-25)', border: 'var(--yellow-100)', label: 'var(--yellow-700)', msg: 'var(--yellow-800)', pulse: 'var(--yellow-600)' },
+        info:     { bg: 'var(--blue-25)', border: 'var(--blue-100)', label: 'var(--blue-700)', msg: 'var(--blue-800)', pulse: 'var(--blue-500)' }
+      };
+      const c = map[tweaks.alertSeverity] || map.critical;
+      strip.style.background = c.bg;
+      strip.style.borderBottomColor = c.border;
+      const lab = strip.querySelector('.label'); if (lab) lab.style.color = c.label;
+      const msg = strip.querySelector('.msg'); if (msg) msg.style.color = c.msg;
+      const pulse = strip.querySelector('.pulse'); if (pulse) pulse.style.background = c.pulse;
+    }
+
+    const ins = document.querySelector('.insights');
+    if (ins) ins.style.display = tweaks.showInsights ? 'grid' : 'none';
+
+    document.body.dataset.density = tweaks.density;
+    document.querySelectorAll('.metric').forEach(m => {
+      m.style.padding = tweaks.density === 'comfortable' ? '20px' : '16px';
+    });
+
+    document.querySelectorAll('.metric .num').forEach((n,i) => {
+      if (tweaks.metricEmphasis === 'actions' && (i === 0 || i === 1)) {
+        n.style.fontSize = '36px'; n.style.color = '';
+      } else if (tweaks.metricEmphasis === 'success' && i === 3) {
+        n.style.fontSize = '36px'; n.style.color = 'var(--green-600)';
+      } else { n.style.fontSize = '30px'; n.style.color = ''; }
+    });
+
+    const pr = document.querySelector('.practices');
+    const prCard = pr ? pr.closest('.card') : null;
+    if (prCard) prCard.style.display = tweaks.showPractices ? '' : 'none';
+
+    const promo = document.querySelector('.promo');
+    if (promo) {
+      const art = promo.querySelector('.promo-art');
+      if (tweaks.promoStyle === 'minimal') {
+        promo.style.background = '#fff';
+        promo.style.borderColor = 'var(--color-border-default)';
+        if (art) art.style.display = 'none';
+        promo.style.gridTemplateColumns = '1fr';
+      } else if (tweaks.promoStyle === 'banner') {
+        promo.style.background = 'linear-gradient(135deg, #1B1D22 0%, #4F0912 100%)';
+        if (art) art.style.display = '';
+        promo.style.gridTemplateColumns = '1fr 140px';
+        promo.querySelectorAll('h4, p, .lk, .promo-eyebrow').forEach(el => el.style.color = '#fff');
+        promo.querySelectorAll('.stat .n').forEach(el => el.style.color = '#fff');
+        promo.querySelectorAll('.stat .l').forEach(el => el.style.color = 'rgba(255,255,255,0.7)');
+      } else {
+        promo.style.background = 'var(--cardbox-25)';
+        if (art) art.style.display = '';
+        promo.style.gridTemplateColumns = '1fr 140px';
+        promo.querySelectorAll('h4, p, .lk, .promo-eyebrow, .stat .n, .stat .l').forEach(el => el.style.color = '');
+      }
+    }
+  }, [tweaks]);
+
+  return (
+    <TweaksPanel title="Tweaks">
+      <TweakSection label="Personalisation">
+        <TweakText label="Greeting name" value={tweaks.greetingName} onChange={v => setTweak('greetingName', v)} />
+        <TweakRadio label="Density" value={tweaks.density} onChange={v => setTweak('density', v)}
+          options={['compact','comfortable']} />
+      </TweakSection>
+      <TweakSection label="Critical alerts">
+        <TweakToggle label="Show alert strip" value={tweaks.showAlertStrip} onChange={v => setTweak('showAlertStrip', v)} />
+        <TweakRadio label="Severity" value={tweaks.alertSeverity} onChange={v => setTweak('alertSeverity', v)}
+          options={['critical','warning','info']} />
+      </TweakSection>
+      <TweakSection label="Layout">
+        <TweakToggle label="Insights row" value={tweaks.showInsights} onChange={v => setTweak('showInsights', v)} />
+        <TweakToggle label="Best practices" value={tweaks.showPractices} onChange={v => setTweak('showPractices', v)} />
+        <TweakRadio label="Metric emphasis" value={tweaks.metricEmphasis} onChange={v => setTweak('metricEmphasis', v)}
+          options={['balanced','actions','success']} />
+      </TweakSection>
+      <TweakSection label="Marketing card">
+        <TweakRadio label="Style" value={tweaks.promoStyle} onChange={v => setTweak('promoStyle', v)}
+          options={['spotlight','minimal','banner']} />
+      </TweakSection>
+    </TweaksPanel>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('tweaks-root')).render(<TweaksApp />);
+</script>
+
+<script>
+  // ── Tab switching ──
+  document.querySelectorAll('.page-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.page-tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const target = t.dataset.tab;
+      document.querySelectorAll('[data-pane]').forEach(p => p.classList.toggle('active', p.dataset.pane === target));
+      window.scrollTo({top:0,behavior:'smooth'});
+      if (target === 'analytics') { setTimeout(() => { drawChart(); }, 50); }
+    });
+  });
+
+  // ── Range pickers (segmented controls) ──
+  document.querySelectorAll('[data-key], .range, .seg').forEach(group => {
+    group.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  });
+
+  // ── Sidebar nav ──
+  document.querySelectorAll('.sb-icon').forEach(i => {
+    if (i.classList.contains('persona-item')) return; // persona icons handled below
+    i.addEventListener('click', () => {
+      document.querySelectorAll('.sb-icon:not(.persona-item)').forEach(x => x.classList.remove('active'));
+      i.classList.add('active');
+    });
+  });
+
+  // ── Persona switching (icons live inside black sidebar) ──
+  document.querySelectorAll('.persona-item').forEach(p => {
+    p.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.persona-item').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+      const persona = p.dataset.persona;
+      document.body.dataset.persona = persona;
+      const greetingP = document.querySelector('.greeting p');
+      const map = {
+        all: 'You have <b>14 actions waiting</b> on you. Start with high-risk orders and bad addresses.',
+        owner: 'Net revenue is up <b>8% week-on-week</b>. Delivery rate at 87.5%. ROAS down — review ads.',
+        support: 'You have <b>11 tasks to action</b> — 3 breaching SLA in &lt; 2h. Start with claims expiring today.',
+        operations: '<b>9 pickups</b> due today, cut-off in 2h 14m. <b>312 shipments</b> waiting to be manifested.',
+      };
+      if (greetingP && map[persona]) greetingP.innerHTML = map[persona];
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+  });
+
+  // ── Alert carousel ──
+  const alerts = [
+    'Pickup &amp; delivery operations in <b>Noida and Ghaziabad</b> are highly impacted due to ongoing protests. <a href="#">View affected shipments (24)</a>',
+    'Heavy rain in <b>Mumbai metro</b> — expect 6-12h delays in Andheri, Ghatkopar and Powai pin-codes. <a href="#">View 142 impacted AWBs</a>',
+    'COD remittance for <b>2 May cycle</b> requires GST verification. <a href="#">Verify now to avoid hold</a>',
+  ];
+  let aIdx = 0;
+  const aMsg = document.getElementById('alertMsg');
+  const aCount = document.getElementById('alertCount');
+  function renderAlert(){ aMsg.innerHTML = alerts[aIdx]; aCount.textContent = (aIdx+1)+' / '+alerts.length; }
+  document.getElementById('alertPrev').addEventListener('click', () => { aIdx = (aIdx-1+alerts.length)%alerts.length; renderAlert(); });
+  document.getElementById('alertNext').addEventListener('click', () => { aIdx = (aIdx+1)%alerts.length; renderAlert(); });
+  document.querySelector('.alert-strip .dismiss').addEventListener('click', () => document.getElementById('alertStrip').style.display='none');
+
+  // ── Revenue chart ──
+  function drawChart(){
+    const wrap = document.getElementById('revenueChart');
+    if(!wrap) return;
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    if (w === 0 || h === 0) return;
+    const days = 14;
+    const rev = [22,24,21,28,32,30,35,38,34,40,44,41,46,52];
+    const ord = [1800,2100,1700,2400,2800,2600,3000,3200,2900,3300,3600,3500,3800,4200];
+    const padL=36, padR=14, padT=14, padB=24;
+    const cw = w - padL - padR, ch = h - padT - padB;
+    const xs = i => padL + (cw / (days-1)) * i;
+    const maxR = 60, maxO = 5000;
+    const yR = v => padT + ch - (v / maxR) * ch;
+    const yO = v => padT + ch - (v / maxO) * ch;
+
+    let grid = '';
+    for (let g=0; g<=4; g++){
+      const y = padT + (ch/4)*g;
+      grid += `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#F2F2F2" stroke-width="1"/>`;
+      grid += `<text x="${padL-6}" y="${y+3}" text-anchor="end" font-family="Inter" font-size="9" fill="#999">${(maxR - g*15).toFixed(0)}L</text>`;
+    }
+
+    const linePath = (arr, yfn) => arr.map((v,i)=> (i? 'L' : 'M') + xs(i) + ' ' + yfn(v)).join(' ');
+    const areaPath = (arr, yfn) => 'M' + xs(0) + ' ' + (padT+ch) + ' ' + arr.map((v,i)=> 'L' + xs(i) + ' ' + yfn(v)).join(' ') + ' L' + xs(days-1) + ' ' + (padT+ch) + ' Z';
+
+    let dots = rev.map((v,i)=> `<circle cx="${xs(i)}" cy="${yR(v)}" r="3" fill="#ED1B36"/>`).join('');
+
+    let xlabels = '';
+    for (let i=0; i<days; i+=2){
+      xlabels += `<text x="${xs(i)}" y="${h-6}" text-anchor="middle" font-family="Inter" font-size="9" fill="#999">${22+i} Apr</text>`;
+    }
+
+    wrap.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      ${grid}
+      <defs>
+        <linearGradient id="ga" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#ED1B36" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#ED1B36" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="${areaPath(rev, yR)}" fill="url(#ga)"/>
+      <path d="${linePath(rev, yR)}" fill="none" stroke="#ED1B36" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="${linePath(ord, yO)}" fill="none" stroke="#2396FB" stroke-width="2" stroke-dasharray="3 3" stroke-linecap="round"/>
+      ${dots}
+      ${xlabels}
+    </svg>`;
+  }
+  drawChart();
+  window.addEventListener('resize', drawChart);
+
+  // ── Geo heatmap (state-wise grid mock) ──
+  const heatStates = [
+    ['MH', 4820, 4],['DL', 3210, 3],['KA', 2890, 4],['UP', 2410, 3],['TN', 2150, 3],['GJ', 1820, 2],['WB', 1640, 2],['TG', 1480, 2],
+    ['HR', 1220, 2],['RJ', 1090, 2],['MP', 980, 1],['KL', 920, 1],['PB', 810, 1],['AP', 760, 1],['BR', 640, 1],['OR', 580, 1],
+    ['CH', 510, 1],['JK', 380, 0],['UK', 310, 0],['HP', 280, 0],['JH', 240, 0],['CG', 210, 0],['AS', 180, 0],['GA', 150, 0],
+  ];
+  const palette = ['#FDE8EB','#F9B3BC','#F04158','#C5172D','#770E1B'];
+  const heat = document.getElementById('heat');
+  if (heat) {
+    heat.innerHTML = heatStates.map(([code,n,lvl]) => `
+      <div class="cell" style="background:${palette[lvl]}" title="${code} — ${n.toLocaleString()} delivered">
+        <div class="hl">${code}<small>${n.toLocaleString()}</small></div>
+      </div>
+    `).join('');
+  }
+
+  // ── Week-on-week trend modal ──
+  // Expand/collapse details
+  document.querySelectorAll('.expand-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.getElementById(link.dataset.target);
+      if (!target) return;
+      const open = target.hasAttribute('hidden');
+      if (open) {
+        target.removeAttribute('hidden');
+        link.textContent = 'Hide details ↑';
+        link.classList.add('open');
+      } else {
+        target.setAttribute('hidden', '');
+        link.textContent = 'View details ↓';
+        link.classList.remove('open');
+      }
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const wowBackdrop = document.getElementById('wowBackdrop');
+    const wowOpen = document.getElementById('openWowModal');
+    const wowClose = document.getElementById('wowClose');
+    const wowCloseBtn = document.getElementById('wowCloseBtn');
+    if (!wowBackdrop) return;
+    function openWow(){ wowBackdrop.classList.add('open'); document.body.style.overflow='hidden'; }
+    function closeWow(){ wowBackdrop.classList.remove('open'); document.body.style.overflow=''; }
+    if (wowOpen) wowOpen.addEventListener('click', (e) => { e.preventDefault(); openWow(); });
+    if (wowClose) wowClose.addEventListener('click', closeWow);
+    if (wowCloseBtn) wowCloseBtn.addEventListener('click', closeWow);
+    wowBackdrop.addEventListener('click', (e) => { if (e.target === wowBackdrop) closeWow(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeWow(); });
+  });
+</script>
+
+<!-- ── Week-on-week comparison modal ── -->
+<div class="modal-backdrop" id="wowBackdrop" role="dialog" aria-modal="true" aria-labelledby="wowTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="wowTitle">Performance — week-on-week comparison</h2>
+        <p>This week (22–28 Apr) vs last week (15–21 Apr) · all clients</p>
+      </div>
+      <button class="modal-close" id="wowClose" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <table class="wow-table">
+        <thead>
+          <tr>
+            <th>Stage</th>
+            <th class="r">This week</th>
+            <th class="r">Last week</th>
+            <th class="r">Δ Volume</th>
+            <th class="r">This week %</th>
+            <th class="r">Last week %</th>
+            <th class="r">Δ Share</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="wow-stage"><i></i> Manifested</span></td>
+            <td class="r">24,180</td>
+            <td class="r">22,760</td>
+            <td class="r delta-up">+1,420 (+6.2%)</td>
+            <td class="r">100%</td>
+            <td class="r">100%</td>
+            <td class="r delta-flat">—</td>
+          </tr>
+          <tr>
+            <td><span class="wow-stage picked"><i></i> Picked</span></td>
+            <td class="r">23,640</td>
+            <td class="r">22,140</td>
+            <td class="r delta-up">+1,500 (+6.8%)</td>
+            <td class="r">97.8%</td>
+            <td class="r">97.3%</td>
+            <td class="r delta-up">+0.5 pp</td>
+          </tr>
+          <tr>
+            <td><span class="wow-stage transit"><i></i> In transit</span></td>
+            <td class="r">22,520</td>
+            <td class="r">21,180</td>
+            <td class="r delta-up">+1,340 (+6.3%)</td>
+            <td class="r">93.1%</td>
+            <td class="r">93.1%</td>
+            <td class="r delta-flat">— 0.0 pp</td>
+          </tr>
+          <tr>
+            <td><span class="wow-stage delivered"><i></i> Delivered</span></td>
+            <td class="r">21,210</td>
+            <td class="r">19,640</td>
+            <td class="r delta-up">+1,570 (+8.0%)</td>
+            <td class="r">87.7%</td>
+            <td class="r">86.3%</td>
+            <td class="r delta-up">+1.4 pp</td>
+          </tr>
+          <tr>
+            <td><span class="wow-stage rto"><i></i> RTO</span></td>
+            <td class="r">948</td>
+            <td class="r">812</td>
+            <td class="r delta-dn">+136 (+16.7%)</td>
+            <td class="r">3.92%</td>
+            <td class="r">3.57%</td>
+            <td class="r delta-dn">+0.35 pp</td>
+          </tr>
+          <tr>
+            <td><span class="wow-stage lost"><i></i> Lost / damaged</span></td>
+            <td class="r">62</td>
+            <td class="r">71</td>
+            <td class="r delta-up">−9 (−12.7%)</td>
+            <td class="r">0.26%</td>
+            <td class="r">0.31%</td>
+            <td class="r delta-up">−0.05 pp</td>
+          </tr>
+          <tr>
+            <td colspan="7" style="padding:14px 16px;background:#fff;border-bottom:1px solid var(--color-border-default);font-size:11px;font-weight:600;font-family:var(--font-ui);text-transform:uppercase;letter-spacing:0.6px;color:var(--color-text-tertiary)">Time to action</td>
+          </tr>
+          <tr>
+            <td>Avg. time to pickup</td>
+            <td class="r">14h 22m</td>
+            <td class="r">15h 00m</td>
+            <td class="r delta-up">−38m</td>
+            <td class="r" colspan="3" style="color:var(--color-text-tertiary)">Faster pickups vs last week</td>
+          </tr>
+          <tr>
+            <td>Avg. transit time</td>
+            <td class="r">2d 4h</td>
+            <td class="r">2d 6h</td>
+            <td class="r delta-up">−2h</td>
+            <td class="r" colspan="3" style="color:var(--color-text-tertiary)">Better routing on Maharashtra lane</td>
+          </tr>
+          <tr>
+            <td>NDR resolution time</td>
+            <td class="r">9h 48m</td>
+            <td class="r">8h 30m</td>
+            <td class="r delta-dn">+1h 18m</td>
+            <td class="r" colspan="3" style="color:var(--color-text-tertiary)">Slower — Bengaluru zone driving up</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-foot">
+      <span class="meta">Data refreshed 9 min ago · 2 May, 4:21 PM IST</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" id="wowCloseBtn">Close</button>
+        <button class="btn btn-primary">Download as CSV</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
