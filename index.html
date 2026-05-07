@@ -297,6 +297,32 @@ body { font-family: var(--font-body); background: var(--surface); color: var(--i
 .exc-title { font-size: 13px; font-weight: 600; color: var(--ink); }
 .exc-sub { font-size: 12px; color: var(--ink-4); margin-top: 1px; }
 
+/* ── Shipment trend chart ── */
+.chart-card { margin-bottom: 20px; }
+.chart-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 12px; }
+.chart-head-left { display: flex; flex-direction: column; gap: 2px; }
+.chart-card-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.chart-card-sub { font-size: 12px; color: var(--ink-4); font-family: var(--font-ui); }
+.chart-seg { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-sm); padding: 2px; }
+.chart-seg-btn {
+  height: 26px; padding: 0 11px; border-radius: 4px;
+  font-size: 12px; font-weight: 600; font-family: var(--font-ui); color: var(--ink-3);
+  cursor: pointer; transition: background 120ms, color 120ms; background: none;
+}
+.chart-seg-btn.active { background: var(--white); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.chart-seg-btn:hover:not(.active) { color: var(--ink); }
+.chart-legend { display: flex; align-items: center; gap: 16px; padding: 0 18px 12px; flex-wrap: wrap; }
+.chart-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-3); font-family: var(--font-ui); }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.legend-line { width: 16px; height: 2px; border-radius: 1px; flex-shrink: 0; position: relative; }
+.legend-line::after { content: ''; width: 5px; height: 5px; border-radius: 999px; background: inherit; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); border: 1px solid var(--white); }
+.chart-wrap { padding: 0 18px 16px; position: relative; }
+.chart-canvas-area { position: relative; }
+.chart-canvas-area canvas { display: block; width: 100%; }
+.chart-y-labels { position: absolute; left: 0; top: 0; bottom: 24px; display: flex; flex-direction: column-reverse; justify-content: space-between; pointer-events: none; }
+.chart-y-label { font-size: 10px; color: var(--ink-4); font-family: var(--font-ui); line-height: 1; }
+.chart-divider { border-top: 1px solid var(--rule); margin: 0; }
+
 /* ── Performance strip ── */
 .perf-strip {
   display: grid; grid-template-columns: repeat(4, 1fr);
@@ -924,6 +950,41 @@ body { font-family: var(--font-body); background: var(--surface); color: var(--i
             </div>
           </div>
 
+          <!-- SHIPMENT TREND CHART -->
+          <div class="section-label">Shipment Trends</div>
+          <div class="card chart-card">
+            <div class="chart-head">
+              <div class="chart-head-left">
+                <div class="chart-card-title">Volume &amp; Delivery Rate</div>
+                <div class="chart-card-sub" id="chartSubLabel">Last 7 days</div>
+              </div>
+              <div class="chart-seg">
+                <button class="chart-seg-btn" data-range="day" onclick="switchChartRange('day',this)">Day</button>
+                <button class="chart-seg-btn active" data-range="week" onclick="switchChartRange('week',this)">Week</button>
+                <button class="chart-seg-btn" data-range="month" onclick="switchChartRange('month',this)">Month</button>
+              </div>
+            </div>
+            <div class="chart-divider"></div>
+            <div class="chart-legend" style="padding-top:12px">
+              <div class="chart-legend-item">
+                <div class="legend-dot" style="background:#1BA86E"></div>Delivered
+              </div>
+              <div class="chart-legend-item">
+                <div class="legend-dot" style="background:#CF9F02"></div>In Transit
+              </div>
+              <div class="chart-legend-item">
+                <div class="legend-dot" style="background:#ED1B36"></div>Returned
+              </div>
+              <div class="chart-legend-item" style="margin-left:4px">
+                <div class="legend-line" style="background:#2396FB"></div>
+                <span style="color:var(--blue);font-weight:600">Delivery %</span>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="shipmentChart" height="200"></canvas>
+            </div>
+          </div>
+
         </div><!-- /left -->
 
         <!-- RIGHT RAIL -->
@@ -1170,6 +1231,174 @@ body { font-family: var(--font-body); background: var(--surface); color: var(--i
       btn.classList.add('active');
     });
   });
+
+  // ── Shipment Trend Chart ──────────────────────────────────────────────
+  const chartData = {
+    day: {
+      labels: ['9am','10am','11am','12pm','1pm','2pm','3pm','4pm','5pm','6pm','7pm','8pm'],
+      delivered:  [42, 58, 71, 65, 80, 74, 88, 69, 55, 48, 36, 29],
+      inTransit:  [18, 22, 19, 25, 20, 18, 15, 21, 26, 22, 18, 14],
+      returned:   [4,  5,  7,  6,  8,  7,  9,  6,  5,  4,  5,  3],
+      subLabel: 'Today · hourly',
+    },
+    week: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      delivered:  [312, 428, 391, 445, 502, 378, 289],
+      inTransit:  [98,  112, 104, 120, 130, 95,  78],
+      returned:   [28,  34,  31,  38,  42,  29,  22],
+      subLabel: 'Last 7 days',
+    },
+    month: {
+      labels: ['W1','W2','W3','W4'],
+      delivered:  [1820, 2140, 1980, 2310],
+      inTransit:  [540,  610,  580,  650],
+      returned:   [148,  172,  159,  188],
+      subLabel: 'Last 4 weeks',
+    },
+  };
+
+  let currentRange = 'week';
+
+  function drawChart(range) {
+    const canvas = document.getElementById('shipmentChart');
+    if (!canvas) return;
+    const d = chartData[range];
+    document.getElementById('chartSubLabel').textContent = d.subLabel;
+
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.parentElement.clientWidth;
+    const H = 200;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    const padL = 42, padR = 16, padT = 12, padB = 36;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+    const n = d.labels.length;
+
+    // totals & delivery %
+    const totals = d.labels.map((_, i) => d.delivered[i] + d.inTransit[i] + d.returned[i]);
+    const pct    = d.labels.map((_, i) => d.delivered[i] / totals[i] * 100);
+    const maxTotal = Math.max(...totals);
+    const maxPct   = 100;
+
+    const barW    = chartW / n * 0.55;
+    const barGap  = chartW / n;
+
+    // Grid lines
+    const gridCount = 4;
+    ctx.save();
+    for (let i = 0; i <= gridCount; i++) {
+      const y = padT + chartH - (chartH / gridCount) * i;
+      ctx.beginPath();
+      ctx.strokeStyle = i === 0 ? '#E6E6E6' : '#F0F0F0';
+      ctx.lineWidth = 1;
+      ctx.moveTo(padL, y);
+      ctx.lineTo(padL + chartW, y);
+      ctx.stroke();
+      // Y axis labels (shipment count)
+      const val = Math.round(maxTotal / gridCount * i);
+      ctx.fillStyle = '#999';
+      ctx.font = '10px Inter, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(val >= 1000 ? (val/1000).toFixed(1)+'k' : val, padL - 6, y + 3.5);
+    }
+    ctx.restore();
+
+    // Stacked bars
+    const colors = {
+      delivered:  '#1BA86E',
+      inTransit:  '#CF9F02',
+      returned:   '#ED1B36',
+    };
+    const stack = ['returned', 'inTransit', 'delivered'];
+
+    for (let i = 0; i < n; i++) {
+      const x = padL + i * barGap + (barGap - barW) / 2;
+      let yBase = padT + chartH;
+
+      stack.forEach(key => {
+        const val = d[key][i];
+        const barH = (val / maxTotal) * chartH;
+        yBase -= barH;
+        ctx.fillStyle = colors[key];
+        // Rounded top only for top bar (delivered)
+        if (key === 'delivered') {
+          const r = Math.min(3, barH / 2);
+          ctx.beginPath();
+          ctx.moveTo(x + r, yBase);
+          ctx.lineTo(x + barW - r, yBase);
+          ctx.quadraticCurveTo(x + barW, yBase, x + barW, yBase + r);
+          ctx.lineTo(x + barW, yBase + barH);
+          ctx.lineTo(x, yBase + barH);
+          ctx.lineTo(x, yBase + r);
+          ctx.quadraticCurveTo(x, yBase, x + r, yBase);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.fillRect(x, yBase, barW, barH);
+        }
+      });
+
+      // X-axis labels
+      ctx.fillStyle = '#999';
+      ctx.font = '10px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(d.labels[i], padL + i * barGap + barGap / 2, H - padB + 16);
+    }
+
+    // Delivery % line
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const x = padL + i * barGap + barGap / 2;
+      const y = padT + chartH - (pct[i] / maxPct) * chartH;
+      if (i === 0) ctx.moveTo(x, y);
+      else         ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#2396FB';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // Right-axis % label (top of line)
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#2396FB';
+    ctx.font = '600 10px Inter, sans-serif';
+    const lastX = padL + (n - 1) * barGap + barGap / 2 + 6;
+    const lastY = padT + chartH - (pct[n-1] / maxPct) * chartH;
+    ctx.fillText(pct[n-1].toFixed(0) + '%', lastX > W - 20 ? lastX - 28 : lastX, lastY + 4);
+
+    // Dots on line
+    for (let i = 0; i < n; i++) {
+      const x = padL + i * barGap + barGap / 2;
+      const y = padT + chartH - (pct[i] / maxPct) * chartH;
+      ctx.beginPath();
+      ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.strokeStyle = '#2396FB';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function switchChartRange(range, btn) {
+    currentRange = range;
+    document.querySelectorAll('.chart-seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    drawChart(range);
+  }
+
+  drawChart('week');
+  window.addEventListener('resize', () => drawChart(currentRange));
 </script>
 </body>
 </html>
