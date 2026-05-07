@@ -560,13 +560,17 @@ body { font-family: var(--font-body); background: var(--surface); color: var(--i
 .mt-20 { margin-top: 20px; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 
-/* ── Page-level tab bar ── */
-.page-tabs { display:flex; align-items:center; gap:2px; border-bottom:1px solid var(--rule); margin-bottom:24px; padding:0 2px; }
-.page-tab { height:36px; padding:0 14px; font-size:13px; font-weight:600; font-family:var(--font-ui); color:var(--ink-3); border-bottom:2px solid transparent; cursor:pointer; margin-bottom:-1px; display:flex; align-items:center; gap:6px; transition:color 120ms; }
-.page-tab:hover { color:var(--ink); }
-.page-tab.active { color:var(--ink); border-bottom-color:var(--red); }
-.page-tab svg { opacity:0.6; }
-.page-tab.active svg { opacity:1; }
+/* ── Inline content tab bar (below greeting) ── */
+.content-tabs { display:flex; align-items:center; gap:0; border-bottom:1px solid var(--rule); margin-bottom:20px; padding:0; }
+.content-tab { height:34px; padding:0 16px; font-size:13px; font-weight:600; font-family:var(--font-ui); color:var(--ink-4); border-bottom:2px solid transparent; cursor:pointer; margin-bottom:-1px; display:flex; align-items:center; gap:6px; transition:color 120ms,border-color 120ms; white-space:nowrap; }
+.content-tab:hover { color:var(--ink); }
+.content-tab.active { color:var(--ink); border-bottom-color:var(--red); }
+.content-tab svg { opacity:0.55; }
+.content-tab.active svg { opacity:1; }
+.content-tab-spacer { flex:1; }
+/* legacy page-tabs (kept for compat) */
+.page-tabs { display:none; }
+.page-tab  { display:none; }
 
 /* ── Analytics page ── */
 .an-page-head { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:20px; }
@@ -789,18 +793,7 @@ body { font-family: var(--font-body); background: var(--surface); color: var(--i
     <div class="content">
 
       <!-- PAGE TABS -->
-      <div class="page-tabs">
-        <div class="page-tab active" data-view="home" onclick="switchView('home',this)">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12L12 4l9 8"/><path d="M9 21V12h6v9"/></svg>Home
-        </div>
-        <div class="page-tab" data-view="analytics" onclick="switchView('analytics',this)">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Analytics
-        </div>
-      </div>
-
-      <div id="homeView">
-
-      <!-- ALERTS -->
+      <!-- ALERTS (always visible) -->
       <div class="alerts">
         <div class="alert-row crit">
           <span class="alert-dot"></span>
@@ -822,12 +815,34 @@ body { font-family: var(--font-body); background: var(--surface); color: var(--i
         </div>
       </div>
 
-      <!-- PAGE HEADER -->
-      <div class="page-head">
+      <!-- PAGE HEADER (always visible) -->
+      <div class="page-head" style="margin-bottom:16px">
         <div>
           <div class="greeting-name">Good morning, Anjali</div>
+          <div class="greeting-line" id="greetingLine">You have <b>14 actions waiting</b> on you. Start with high-risk orders and bad addresses.</div>
         </div>
       </div>
+
+      <!-- INLINE TABS -->
+      <div class="content-tabs">
+        <div class="content-tab active" data-view="overview" onclick="switchView('overview',this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Overview
+        </div>
+        <div class="content-tab" data-view="analytics" onclick="switchView('analytics',this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Analytics
+        </div>
+        <div class="content-tab-spacer"></div>
+        <!-- Date filter — only shown in Analytics -->
+        <div id="analyticsDateFilter" style="display:none;padding-bottom:6px">
+          <div class="date-seg">
+            <button class="date-seg-btn" onclick="switchDateRange('7d',this)">7D</button>
+            <button class="date-seg-btn" onclick="switchDateRange('14d',this)">14D</button>
+            <button class="date-seg-btn active" onclick="switchDateRange('30d',this)">30D</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="homeView">
 
       <!-- SUPPORT HERO (hidden by default) -->
       <div class="persona-hero" id="supportHero">
@@ -1277,16 +1292,8 @@ body { font-family: var(--font-body); background: var(--surface); color: var(--i
       <!-- ══ ANALYTICS VIEW ══ -->
       <div id="analyticsView" style="display:none">
 
-        <div class="an-page-head">
-          <div>
-            <div class="an-title">Analytics</div>
-            <div class="an-sub" id="anSubLabel">Last 30 days · 8 Apr – 7 May 2025</div>
-          </div>
-          <div class="date-seg">
-            <button class="date-seg-btn" onclick="switchDateRange('7d',this)">7D</button>
-            <button class="date-seg-btn" onclick="switchDateRange('14d',this)">14D</button>
-            <button class="date-seg-btn active" onclick="switchDateRange('30d',this)">30D</button>
-          </div>
+        <div style="margin-bottom:16px">
+          <div class="an-sub" id="anSubLabel" style="font-size:12px;color:var(--ink-4);font-family:var(--font-ui)">Last 30 days · 8 Apr – 7 May 2025</div>
         </div>
 
         <!-- Revenue KPIs -->
@@ -1574,7 +1581,7 @@ body { font-family: var(--font-body); background: var(--surface); color: var(--i
     // Edu
     updateEdu(persona);
     // Greeting
-    const greeting = document.querySelector('.greeting-line');
+    const greeting = document.getElementById('greetingLine');
     const map = {
       all:     'You have <b>14 actions waiting</b> on you. Start with high-risk orders and bad addresses.',
       owner:   'Net revenue up <b>8% week-on-week</b>. Delivery rate 87.5%. ROAS down — review ads.',
@@ -1790,19 +1797,20 @@ body { font-family: var(--font-body); background: var(--surface); color: var(--i
 
   // ── View switcher ─────────────────────────────────────────────────────
   function switchView(view, tabEl) {
-    document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.content-tab').forEach(t => t.classList.remove('active'));
     if (tabEl) tabEl.classList.add('active');
-    const isHome = view === 'home';
-    document.getElementById('homeView').style.display      = isHome ? '' : 'none';
-    document.getElementById('analyticsView').style.display = isHome ? 'none' : '';
-    if (!isHome) initAnalytics();
+    const isOverview = view === 'overview' || view === 'home';
+    document.getElementById('homeView').style.display        = isOverview ? '' : 'none';
+    document.getElementById('analyticsView').style.display   = isOverview ? 'none' : '';
+    const dateFilter = document.getElementById('analyticsDateFilter');
+    if (dateFilter) dateFilter.style.display = isOverview ? 'none' : '';
+    if (!isOverview) initAnalytics();
   }
 
   document.querySelectorAll('.nav-btn[data-view="analytics"]').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
-      document.querySelector('.page-tab[data-view="analytics"]').classList.add('active');
-      switchView('analytics', null);
+      const tab = document.querySelector('.content-tab[data-view="analytics"]');
+      switchView('analytics', tab);
     });
   });
 
